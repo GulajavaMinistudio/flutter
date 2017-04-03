@@ -15,29 +15,6 @@ export 'package:flutter/services.dart' show TextInputType;
 const Duration _kTransitionDuration = const Duration(milliseconds: 200);
 const Curve _kTransitionCurve = Curves.fastOutSlowIn;
 
-/// A simple undecorated text input field.
-///
-/// If you want decorations as specified in the Material spec (most likely),
-/// use [Input] instead.
-///
-/// This widget is comparable to [Text] in that it does not include a margin
-/// or any decoration outside the text itself. It is useful for applications,
-/// like a search box, that don't need any additional decoration. It should
-/// also be useful in custom widgets that support text input.
-///
-/// The [value] field must be updated each time the [onChanged] callback is
-/// invoked. Be sure to include the full [value] provided by the [onChanged]
-/// callback, or information like the current selection will be lost.
-///
-/// Requires one of its ancestors to be a [Material] widget.
-///
-/// See also:
-///
-/// * [Input], which adds a label, a divider below the text field, and support for
-///   an error message.
-
-
-
 /// A Material Design text field.
 ///
 /// A text field lets the user enter text, either with hardware keyboard or with
@@ -92,6 +69,7 @@ class TextField extends StatefulWidget {
     this.decoration: const InputDecoration(),
     this.keyboardType: TextInputType.text,
     this.style,
+    this.textAlign,
     this.autofocus: false,
     this.obscureText: false,
     this.maxLines: 1,
@@ -111,7 +89,7 @@ class TextField extends StatefulWidget {
 
   /// The decoration to show around the text field.
   ///
-  /// By default, draws a horizontal line under the input field but can be
+  /// By default, draws a horizontal line under the text field but can be
   /// configured to show an icon, label, hint text, and error text.
   ///
   /// Set this field to null to remove the decoration entirely (including the
@@ -128,10 +106,13 @@ class TextField extends StatefulWidget {
   /// If null, defaults to a text style from the current [Theme].
   final TextStyle style;
 
-  /// Whether this input field should focus itself if nothing else is already
+  /// How the text being edited should be aligned horizontally.
+  final TextAlign textAlign;
+
+  /// Whether this text field should focus itself if nothing else is already
   /// focused.
   ///
-  /// If true, the keyboard will open as soon as this input obtains focus.
+  /// If true, the keyboard will open as soon as this text field obtains focus.
   /// Otherwise, the keyboard is only shown after the user taps the text field.
   ///
   /// Defaults to false.
@@ -141,8 +122,8 @@ class TextField extends StatefulWidget {
 
   /// Whether to hide the text being edited (e.g., for passwords).
   ///
-  /// When this is set to true, all the characters in the input are replaced by
-  /// U+2022 BULLET characters (•).
+  /// When this is set to true, all the characters in the text field are
+  /// replaced by U+2022 BULLET characters (•).
   ///
   /// Defaults to false.
   final bool obscureText;
@@ -232,6 +213,7 @@ class _TextFieldState extends State<TextField> {
         focusNode: focusNode,
         keyboardType: config.keyboardType,
         style: style,
+        textAlign: config.textAlign,
         autofocus: config.autofocus,
         obscureText: config.obscureText,
         maxLines: config.maxLines,
@@ -250,6 +232,7 @@ class _TextFieldState extends State<TextField> {
           return new InputDecorator(
             decoration: config.decoration,
             baseStyle: config.style,
+            textAlign: config.textAlign,
             isFocused: focusNode.hasFocus,
             isEmpty: controller.value.text.isEmpty,
             child: child,
