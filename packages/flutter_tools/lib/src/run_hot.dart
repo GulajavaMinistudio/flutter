@@ -120,7 +120,6 @@ class HotRunner extends ResidentRunner {
     }
     final bool devfsResult = await _updateDevFS();
     if (!devfsResult) {
-      printError('Could not perform initial file synchronization.');
       return 3;
     }
 
@@ -263,10 +262,16 @@ class HotRunner extends ResidentRunner {
     }
     final Status devFSStatus = logger.startProgress('Syncing files to device...',
         expectSlowOperation: true);
-    final int bytes = await _devFS.update(progressReporter: progressReporter,
-                        bundle: assetBundle,
-                        bundleDirty: rebuildBundle,
-                        fileFilter: _dartDependencies);
+    int bytes = 0;
+    try {
+      bytes = await _devFS.update(progressReporter: progressReporter,
+          bundle: assetBundle,
+          bundleDirty: rebuildBundle,
+          fileFilter: _dartDependencies);
+    } on DevFSException {
+      devFSStatus.cancel();
+      return false;
+    }
     devFSStatus.stop();
     if (!hotRunnerConfig.stableDartDependencies) {
       // Clear the set after the sync so they are recomputed next time.
@@ -323,7 +328,7 @@ class HotRunner extends ResidentRunner {
     restartTimer.start();
     final bool updatedDevFS = await _updateDevFS();
     if (!updatedDevFS)
-      return new OperationResult(1, 'Dart Source Error');
+      return new OperationResult(1, 'DevFS Synchronization Failed');
     await _launchFromDevFS(package, mainPath);
     restartTimer.stop();
     printTrace('Restart performed in '
@@ -373,7 +378,9 @@ class HotRunner extends ResidentRunner {
         rethrow;
       }
     } else {
-      final Status status = logger.startProgress('Performing hot reload...', progressId: 'hot.reload');
+      final bool reloadOnTopOfSnapshot = _runningFromSnapshot;
+      final String progressPrefix = reloadOnTopOfSnapshot ? 'Initializing' : 'Performing';
+      final Status status =  logger.startProgress('$progressPrefix hot reload...', progressId: 'hot.reload');
       try {
         final Stopwatch timer = new Stopwatch()..start();
         final OperationResult result = await _reloadSources(pause: pauseAfterRestart);
@@ -411,6 +418,8 @@ class HotRunner extends ResidentRunner {
       reassembleTimer = new Stopwatch();
     }
     final bool updatedDevFS = await _updateDevFS();
+    if (!updatedDevFS)
+      return new OperationResult(1, 'DevFS Synchronization Failed');
     if (benchmarkMode) {
       devFSTimer.stop();
       // Record time it took to synchronize to DevFS.
