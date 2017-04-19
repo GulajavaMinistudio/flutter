@@ -324,11 +324,25 @@ class HotRunner extends ResidentRunner {
   }
 
   Future<OperationResult> _restartFromSources() async {
+    printTrace('Refreshing active FlutterViews before restarting.');
+    await refreshViews();
     final Stopwatch restartTimer = new Stopwatch();
     restartTimer.start();
     final bool updatedDevFS = await _updateDevFS();
     if (!updatedDevFS)
       return new OperationResult(1, 'DevFS Synchronization Failed');
+    // Check if the isolate is paused and resume it.
+    if (currentView?.uiIsolate != null) {
+      // Reload the isolate.
+      await currentView.uiIsolate.reload();
+      final ServiceEvent pauseEvent = currentView.uiIsolate.pauseEvent;
+      if ((pauseEvent != null) && pauseEvent.isPauseEvent) {
+        // Resume the isolate so that it can be killed by the embedder.
+        await currentView.uiIsolate.resume();
+      }
+    }
+    // We are now running from source.
+    _runningFromSnapshot = false;
     await _launchFromDevFS(package, mainPath);
     restartTimer.stop();
     printTrace('Restart performed in '
@@ -397,6 +411,8 @@ class HotRunner extends ResidentRunner {
   }
 
   Future<OperationResult> _reloadSources({ bool pause: false }) async {
+    printTrace('Refreshing active FlutterViews before reloading.');
+    await refreshViews();
     if (currentView.uiIsolate == null)
       throw 'Application isolate not found';
     // The initial launch is from a script snapshot. When we reload from source

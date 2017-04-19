@@ -335,6 +335,54 @@ class _DragAnimation extends Animation<double> with AnimationWithParentMixin<dou
   }
 }
 
+// This class, and TabBarScrollController, only exist to handle the the case
+// where a scrollable TabBar has a non-zero initialIndex. In that case we can
+// only compute the scroll position's initial scroll offset (the "correct"
+// pixels value) after the TabBar viewport width and scroll limits are known.
+class _TabBarScrollPosition extends ScrollPosition {
+  _TabBarScrollPosition({
+    ScrollPhysics physics,
+    AbstractScrollState state,
+    ScrollPosition oldPosition,
+    this.tabBar,
+  }) : super(
+    physics: physics,
+    state: state,
+    initialPixels: null,
+    oldPosition: oldPosition,
+  );
+
+  final _TabBarState tabBar;
+
+  @override
+  bool applyContentDimensions(double minScrollExtent, double maxScrollExtent) {
+    bool result = true;
+    if (pixels == null) {
+      correctPixels(tabBar._initialScrollOffset(viewportDimension, minScrollExtent, maxScrollExtent));
+      result = false;
+    }
+    return super.applyContentDimensions(minScrollExtent, maxScrollExtent) && result;
+  }
+}
+
+// This class, and TabBarScrollPosition, only exist to handle the the case
+// where a scrollable TabBar has a non-zero initialIndex.
+class _TabBarScrollController extends ScrollController {
+  _TabBarScrollController(this.tabBar);
+
+  final _TabBarState tabBar;
+
+  @override
+  ScrollPosition createScrollPosition(ScrollPhysics physics, AbstractScrollState state, ScrollPosition oldPosition) {
+    return new _TabBarScrollPosition(
+      physics: physics,
+      state: state,
+      oldPosition: oldPosition,
+      tabBar: tabBar,
+    );
+  }
+}
+
 /// A material design widget that displays a horizontal row of tabs.
 ///
 /// Typically created as part of an [AppBar] and in conjuction with a
@@ -440,7 +488,7 @@ class TabBar extends StatefulWidget implements PreferredSizeWidget {
 }
 
 class _TabBarState extends State<TabBar> {
-  final ScrollController _scrollController = new ScrollController();
+  ScrollController _scrollController;
 
   TabController _controller;
   _IndicatorPainter _indicatorPainter;
@@ -504,14 +552,22 @@ class _TabBarState extends State<TabBar> {
   // tabOffsets[tabOffsets.length] is the right edge of the last tab.
   int get maxTabIndex => _indicatorPainter.tabOffsets.length - 2;
 
-  double _tabCenteredScrollOffset(int tabIndex) {
+  double _tabScrollOffset(int index, double viewportWidth, double minExtent, double maxExtent) {
+    if (!widget.isScrollable)
+      return 0.0;
     final List<double> tabOffsets = _indicatorPainter.tabOffsets;
-    assert(tabOffsets != null && tabIndex >= 0 && tabIndex <= maxTabIndex);
+    assert(tabOffsets != null && index >= 0 && index <= maxTabIndex);
+    final double tabCenter = (tabOffsets[index] + tabOffsets[index + 1]) / 2.0;
+    return (tabCenter - viewportWidth / 2.0).clamp(minExtent, maxExtent);
+  }
 
+  double _tabCenteredScrollOffset(int index) {
     final ScrollPosition position = _scrollController.position;
-    final double tabCenter = (tabOffsets[tabIndex] + tabOffsets[tabIndex + 1]) / 2.0;
-    return (tabCenter - position.viewportDimension / 2.0)
-      .clamp(position.minScrollExtent, position.maxScrollExtent);
+    return _tabScrollOffset(index, position.viewportDimension, position.minScrollExtent, position.maxScrollExtent);
+  }
+
+  double _initialScrollOffset(double viewportWidth, double minExtent, double maxExtent) {
+    return _tabScrollOffset(_currentIndex, viewportWidth, minExtent, maxExtent);
   }
 
   void _scrollToCurrentIndex() {
@@ -557,6 +613,7 @@ class _TabBarState extends State<TabBar> {
     });
   }
 
+  // Called each time layout completes.
   void _saveTabOffsets(List<double> tabOffsets) {
     _indicatorPainter?.tabOffsets = tabOffsets;
   }
@@ -662,6 +719,7 @@ class _TabBarState extends State<TabBar> {
     );
 
     if (widget.isScrollable) {
+      _scrollController ??= new _TabBarScrollController(this);
       tabBar = new SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         controller: _scrollController,
@@ -854,6 +912,33 @@ class _TabBarViewState extends State<TabBarView> {
   }
 }
 
+/// Displays a single 12x12 circle with the specified border and background colors.
+///
+/// Used by [TabPageSelector] to indicate the selected page.
+class TabPageSelectorIndicator extends StatelessWidget {
+  const TabPageSelectorIndicator({ Key key, this.backgroundColor, this.borderColor }) : super(key: key);
+
+  /// The indicator circle's background color.
+  final Color backgroundColor;
+
+  /// The indicator circle's border color.
+  final Color borderColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return new Container(
+      width: 12.0,
+      height: 12.0,
+      margin: const EdgeInsets.all(4.0),
+      decoration: new BoxDecoration(
+        backgroundColor: backgroundColor,
+        border: new Border.all(color: borderColor),
+        shape: BoxShape.circle
+      ),
+    );
+  }
+}
+
 /// Displays a row of small circular indicators, one per tab. The selected
 /// tab's indicator is highlighted. Often used in conjuction with a [TabBarView].
 ///
@@ -878,24 +963,30 @@ class TabPageSelector extends StatelessWidget {
     Color background;
     if (tabController.indexIsChanging) {
       // The selection's animation is animating from previousValue to value.
+      final double t = 1.0 - _indexChangeProgress(tabController);
       if (tabController.index == tabIndex)
-        background = selectedColor.lerp(_indexChangeProgress(tabController));
+        background = selectedColor.lerp(t);
       else if (tabController.previousIndex == tabIndex)
-        background = previousColor.lerp(_indexChangeProgress(tabController));
+        background = previousColor.lerp(t);
       else
         background = selectedColor.begin;
     } else {
-      background = tabController.index == tabIndex ? selectedColor.end : selectedColor.begin;
+      // The selection's offset reflects how far the TabBarView has
+      /// been dragged to the left (-1.0 to 0.0) or the right (0.0 to 1.0).
+      final double offset = tabController.offset;
+      if (tabController.index == tabIndex) {
+        background = selectedColor.lerp(1.0 - offset.abs());
+      } else if (tabController.index == tabIndex - 1 && offset > 0.0) {
+        background = selectedColor.lerp(offset);
+      } else if (tabController.index == tabIndex + 1 && offset < 0.0) {
+        background = selectedColor.lerp(-offset);
+      } else {
+        background = selectedColor.begin;
+      }
     }
-    return new Container(
-      width: 12.0,
-      height: 12.0,
-      margin: const EdgeInsets.all(4.0),
-      decoration: new BoxDecoration(
-        backgroundColor: background,
-        border: new Border.all(color: selectedColor.end),
-        shape: BoxShape.circle
-      )
+    return new TabPageSelectorIndicator(
+      backgroundColor: background,
+      borderColor: selectedColor.end,
     );
   }
 
