@@ -174,6 +174,9 @@ class HotRunner extends ResidentRunner {
       return 1;
     }
 
+    final String modeName = getModeName(debuggingOptions.buildMode);
+    printStatus('Launching ${getDisplayPath(mainPath)} on ${device.name} in $modeName mode...');
+
     package = getApplicationPackageForPlatform(device.targetPlatform, applicationBinary: applicationBinary);
 
     if (package == null) {
@@ -194,9 +197,6 @@ class HotRunner extends ResidentRunner {
     final Map<String, dynamic> platformArgs = <String, dynamic>{};
 
     await startEchoingDeviceLog(package);
-
-    final String modeName = getModeName(debuggingOptions.buildMode);
-    printStatus('Launching ${getDisplayPath(mainPath)} on ${device.name} in $modeName mode...');
 
     // Start the application.
     final Future<LaunchResult> futureResult = device.startApp(
@@ -519,9 +519,15 @@ class HotRunner extends ResidentRunner {
     await _evictDirtyAssets();
     printTrace('Reassembling application');
     bool reassembleAndScheduleErrors = false;
+    bool reassembleTimedOut = false;
     for (FlutterView view in reassembleViews) {
       try {
         await view.uiIsolate.flutterReassemble();
+      } on TimeoutException {
+        reassembleTimedOut = true;
+        printTrace("Reassembling ${view.uiIsolate.name} took too long. ");
+        printStatus("Hot reloading ${view.uiIsolate.name} took too long. Hot reload may have failed.");
+        continue;
       } catch (error) {
         reassembleAndScheduleErrors = true;
         printError('Reassembling ${view.uiIsolate.name} failed: $error');
@@ -548,7 +554,12 @@ class HotRunner extends ResidentRunner {
       benchmarkData['hotReloadMillisecondsToFrame'] =
           reloadTimer.elapsed.inMilliseconds;
     }
-    if (shouldReportReloadTime)
+    // Only report timings if we reloaded a single view without any
+    // errors or timeouts.
+    if ((reassembleViews.length == 1) &&
+        !reassembleAndScheduleErrors &&
+        !reassembleTimedOut &&
+        shouldReportReloadTime)
       flutterUsage.sendTiming('hot', 'reload', reloadTimer.elapsed);
     return new OperationResult(
       reassembleAndScheduleErrors ? 1 : OperationResult.ok.code,
