@@ -104,14 +104,12 @@ class TextEditingController extends ValueNotifier<TextEditingValue> {
 /// movement. This widget does not provide any focus management (e.g.,
 /// tap-to-focus).
 ///
-/// Rather than using this widget directly, consider using [InputField], which
-/// adds tap-to-focus and cut, copy, and paste commands, or [TextField], which
+/// Rather than using this widget directly, consider using [TextField], which
 /// is a full-featured, material-design text input field with placeholder text,
 /// labels, and [Form] integration.
 ///
 /// See also:
 ///
-///  * [InputField], which adds tap-to-focus and cut, copy, and paste commands.
 ///  * [TextField], which is a full-featured, material-design text input field
 ///    with placeholder text, labels, and [Form] integration.
 class EditableText extends StatefulWidget {
@@ -487,7 +485,7 @@ class EditableTextState extends State<EditableText> implements TextInputClient {
 }
 
 class _Editable extends LeafRenderObjectWidget {
-  _Editable({
+  const _Editable({
     Key key,
     this.value,
     this.style,

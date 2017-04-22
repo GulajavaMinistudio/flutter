@@ -36,7 +36,7 @@ final List<_BackgroundLayer> _kBackgroundLayers = <_BackgroundLayer>[
 ];
 
 class _AppBarBackground extends StatelessWidget {
-  _AppBarBackground({ Key key, this.animation }) : super(key: key);
+  const _AppBarBackground({ Key key, this.animation }) : super(key: key);
 
   final Animation<double> animation;
 
@@ -169,10 +169,10 @@ class GalleryHomeState extends State<GalleryHome> with SingleTickerProviderState
           new SliverAppBar(
             pinned: true,
             expandedHeight: _kFlexibleSpaceMaxHeight,
-            flexibleSpace: new FlexibleSpaceBar(
+            flexibleSpace: const FlexibleSpaceBar(
               title: const Text('Flutter Gallery'),
               // TODO(abarth): Wire up to the parallax in a way that doesn't pop during hero transition.
-              background: new _AppBarBackground(animation: kAlwaysDismissedAnimation),
+              background: const _AppBarBackground(animation: kAlwaysDismissedAnimation),
             ),
           ),
           new SliverList(delegate: new SliverChildListDelegate(_galleryListItems())),

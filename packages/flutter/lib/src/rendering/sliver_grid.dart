@@ -145,7 +145,7 @@ class SliverGridRegularTileLayout extends SliverGridLayout {
   ///
   /// All of the arguments must not be null and must not be negative. The
   /// `crossAxisCount` argument must be greater than zero.
-  SliverGridRegularTileLayout({
+  const SliverGridRegularTileLayout({
     @required this.crossAxisCount,
     @required this.mainAxisStride,
     @required this.crossAxisStride,
@@ -589,6 +589,10 @@ class RenderSliverGrid extends RenderSliverMultiBoxAdaptor {
       hasVisualOverflow: true,
     );
 
+    // We may have started the layout while scrolled to the end, which
+    // would not expose a new child.
+    if (estimatedTotalExtent == trailingScrollOffset)
+      childManager.setDidUnderflow(true);
     childManager.didFinishLayout();
   }
 }

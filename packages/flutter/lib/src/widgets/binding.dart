@@ -121,10 +121,10 @@ abstract class WidgetsBinding extends BindingBase implements GestureBinding, Ren
   final BuildOwner _buildOwner = new BuildOwner();
 
   /// The object in charge of the focus tree.
-  /// 
+  ///
   /// Rarely used directly. Instead, consider using [FocusScope.of] to obtain
   /// the [FocusScopeNode] for a given [BuildContext].
-  /// 
+  ///
   /// See [FocusManager] for more details.
   final FocusManager focusManager = new FocusManager();
 
@@ -410,6 +410,12 @@ abstract class WidgetsBinding extends BindingBase implements GestureBinding, Ren
 /// (e.g., the top), consider using the [Align] widget. If you wish to center
 /// your widget, you can also use the [Center] widget
 ///
+/// Calling [runApp] again will detach the previous root widget from the screen
+/// and attach the given widget in its place. The new widget tree is compared
+/// against the previous widget tree and any differences are applied to the
+/// underlying render tree, similar to what happens when a [StatefulWidget]
+/// rebuilds after calling [State.setState].
+///
 /// Initializes the binding using [WidgetsFlutterBinding] if necessary.
 ///
 /// See also:
@@ -593,6 +599,7 @@ class RenderObjectToWidgetElement<T extends RenderObject> extends RootRenderObje
   @override
   void insertChildRenderObject(RenderObject child, dynamic slot) {
     assert(slot == _rootChildSlot);
+    assert(renderObject.debugValidateChild(child));
     renderObject.child = child;
   }
 

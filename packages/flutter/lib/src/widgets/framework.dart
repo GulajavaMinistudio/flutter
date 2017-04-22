@@ -15,7 +15,7 @@ export 'dart:ui' show hashValues, hashList;
 
 export 'package:flutter/foundation.dart' show FlutterError, debugPrint, debugPrintStack;
 export 'package:flutter/foundation.dart' show VoidCallback, ValueChanged, ValueGetter, ValueSetter;
-export 'package:flutter/rendering.dart' show RenderObject, RenderBox, debugDumpRenderTree;
+export 'package:flutter/rendering.dart' show RenderObject, RenderBox, debugDumpRenderTree, debugDumpLayerTree;
 
 // KEYS
 
@@ -4096,6 +4096,7 @@ class SingleChildRenderObjectElement extends RenderObjectElement {
   void insertChildRenderObject(RenderObject child, dynamic slot) {
     final RenderObjectWithChildMixin<RenderObject> renderObject = this.renderObject;
     assert(slot == null);
+    assert(renderObject.debugValidateChild(child));
     renderObject.child = child;
     assert(renderObject == this.renderObject);
   }
@@ -4144,6 +4145,7 @@ class MultiChildRenderObjectElement extends RenderObjectElement {
   @override
   void insertChildRenderObject(RenderObject child, Element slot) {
     final ContainerRenderObjectMixin<RenderObject, ContainerParentDataMixin<RenderObject>> renderObject = this.renderObject;
+    assert(renderObject.debugValidateChild(child));
     renderObject.insert(child, after: slot?.renderObject);
     assert(renderObject == this.renderObject);
   }

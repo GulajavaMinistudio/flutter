@@ -30,7 +30,7 @@ class TestBuildCounter extends StatelessWidget {
 
 
 class FlipWidget extends StatefulWidget {
-  FlipWidget({ Key key, this.left, this.right }) : super(key: key);
+  const FlipWidget({ Key key, this.left, this.right }) : super(key: key);
 
   final Widget left;
   final Widget right;
@@ -54,6 +54,6 @@ class FlipWidgetState extends State<FlipWidget> {
   }
 }
 
-void flipStatefulWidget(WidgetTester tester) {
-  tester.state<FlipWidgetState>(find.byType(FlipWidget)).flip();
+void flipStatefulWidget(WidgetTester tester, { bool skipOffstage: true }) {
+  tester.state<FlipWidgetState>(find.byType(FlipWidget, skipOffstage: skipOffstage)).flip();
 }
