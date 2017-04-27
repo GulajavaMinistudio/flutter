@@ -102,14 +102,13 @@ Future<Process> runCommand(List<String> cmd, {
   String workingDirectory,
   bool allowReentrantFlutter: false,
   Map<String, String> environment
-}) async {
+}) {
   _traceCommand(cmd, workingDirectory: workingDirectory);
-  final Process process = await processManager.start(
+  return processManager.start(
     cmd,
     workingDirectory: workingDirectory,
-    environment: _environment(allowReentrantFlutter, environment)
+    environment: _environment(allowReentrantFlutter, environment),
   );
-  return process;
 }
 
 /// This runs the command and streams stdout/stderr from the child process to
@@ -129,7 +128,7 @@ Future<int> runCommandAndStreamOutput(List<String> cmd, {
     allowReentrantFlutter: allowReentrantFlutter,
     environment: environment
   );
-  final StreamSubscription<String> subscription = process.stdout
+  final StreamSubscription<String> stdoutSubscription = process.stdout
     .transform(UTF8.decoder)
     .transform(const LineSplitter())
     .where((String line) => filter == null ? true : filter.hasMatch(line))
@@ -144,7 +143,7 @@ Future<int> runCommandAndStreamOutput(List<String> cmd, {
           printStatus(message);
       }
     });
-  process.stderr
+  final StreamSubscription<String> stderrSubscription = process.stderr
     .transform(UTF8.decoder)
     .transform(const LineSplitter())
     .where((String line) => filter == null ? true : filter.hasMatch(line))
@@ -157,8 +156,12 @@ Future<int> runCommandAndStreamOutput(List<String> cmd, {
 
   // Wait for stdout to be fully processed
   // because process.exitCode may complete first causing flaky tests.
-  await subscription.asFuture<Null>();
-  subscription.cancel();
+  await Future.wait(<Future<Null>>[
+    stdoutSubscription.asFuture<Null>(),
+    stderrSubscription.asFuture<Null>(),
+  ]);
+  stdoutSubscription.cancel();
+  stderrSubscription.cancel();
 
   return await process.exitCode;
 }
@@ -221,6 +224,15 @@ bool exitsHappy(List<String> cli) {
   }
 }
 
+Future<bool> exitsHappyAsync(List<String> cli) async {
+  _traceCommand(cli);
+  try {
+    return (await processManager.run(cli)).exitCode == 0;
+  } catch (error) {
+    return false;
+  }
+}
+
 /// Run cmd and return stdout.
 ///
 /// Throws an error if cmd exits with a non-zero value.
@@ -239,16 +251,6 @@ String runCheckedSync(List<String> cmd, {
     noisyErrors: true,
     environment: environment,
   );
-}
-
-/// Run cmd and return stdout on success.
-///
-/// Throws the standard error output if cmd exits with a non-zero value.
-String runSyncAndThrowStdErrOnError(List<String> cmd) {
-  return _runWithLoggingSync(cmd,
-                             checked: true,
-                             throwStandardErrorOnError: true,
-                             hideStdout: true);
 }
 
 /// Run cmd and return stdout.
