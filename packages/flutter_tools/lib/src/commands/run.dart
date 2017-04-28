@@ -150,17 +150,20 @@ class RunCommand extends RunCommandBase {
     };
   }
 
-  Device device;
+  List<Device> devices;
 
   @override
   Future<String> get usagePath async {
     final String command = shouldUseHotMode() ? 'hotrun' : name;
 
-    if (device == null)
+    if (devices == null)
       return command;
 
     // Return 'run/ios'.
-    return '$command/${getNameForTargetPlatform(await device.targetPlatform)}';
+    if (devices.length > 1)
+      return '$command/all';
+    else
+      return '$command/${getNameForTargetPlatform(await devices[0].targetPlatform)}';
   }
 
   @override
@@ -197,11 +200,13 @@ class RunCommand extends RunCommandBase {
   bool get stayResident => argResults['resident'];
 
   @override
-  Future<Null> verifyThenRunCommand() async {
+  Future<FlutterCommandResult> verifyThenRunCommand() async {
     commandValidator();
-    device = await findTargetDevice();
-    if (device == null)
+    devices = await findAllTargetDevices();
+    if (devices == null)
       throwToolExit(null);
+    if (deviceManager.hasSpecifiedAllDevices && runningWithPrebuiltApplication)
+      throwToolExit('Using -d all with --use-application-binary is not supported');
     return super.verifyThenRunCommand();
   }
 
@@ -220,8 +225,7 @@ class RunCommand extends RunCommandBase {
   }
 
   @override
-  Future<Null> runCommand() async {
-
+  Future<FlutterCommandResult> runCommand() async {
     Cache.releaseLockEarly();
 
     // Enable hot mode by default if `--no-hot` was not passed and we are in
@@ -229,32 +233,44 @@ class RunCommand extends RunCommandBase {
     final bool hotMode = shouldUseHotMode();
 
     if (argResults['machine']) {
+      if (devices.length > 1)
+        throwToolExit('--machine does not support -d all.');
       final Daemon daemon = new Daemon(stdinCommandStream, stdoutCommandResponse,
           notifyingLogger: new NotifyingLogger(), logToStdout: true);
       AppInstance app;
       try {
         app = await daemon.appDomain.startApp(
-          device, fs.currentDirectory.path, targetFile, route,
+          devices.first, fs.currentDirectory.path, targetFile, route,
           _createDebuggingOptions(), hotMode,
           applicationBinary: argResults['use-application-binary'],
           projectRootPath: argResults['project-root'],
           packagesFilePath: argResults['packages'],
-          projectAssets: argResults['project-assets']);
+          projectAssets: argResults['project-assets']
+        );
       } catch (error) {
         throwToolExit(error.toString());
       }
+      final DateTime appStartedTime = clock.now();
       final int result = await app.runner.waitForAppToFinish();
       if (result != 0)
         throwToolExit(null, exitCode: result);
-      return null;
+      return new FlutterCommandResult(
+        ExitStatus.success,
+        analyticsParameters: <String>['daemon'],
+        endTimeOverride: appStartedTime,
+      );
     }
 
-    if (await device.isLocalEmulator && !isEmulatorBuildMode(getBuildMode()))
-      throwToolExit('${toTitleCase(getModeName(getBuildMode()))} mode is not supported for emulators.');
+    for (Device device in devices) {
+      if (await device.isLocalEmulator && !isEmulatorBuildMode(getBuildMode()))
+        throwToolExit('${toTitleCase(getModeName(getBuildMode()))} mode is not supported for emulators.');
+    }
 
     if (hotMode) {
-      if (!device.supportsHotMode)
-        throwToolExit('Hot mode is not supported by this device. Run with --no-hot.');
+      for (Device device in devices) {
+        if (!device.supportsHotMode)
+          throwToolExit('Hot mode is not supported by ${device.name}. Run with --no-hot.');
+      }
     }
 
     final String pidFile = argResults['pid-file'];
@@ -262,11 +278,15 @@ class RunCommand extends RunCommandBase {
       // Write our pid to the file.
       fs.file(pidFile).writeAsStringSync(pid.toString());
     }
-    ResidentRunner runner;
 
+    final List<FlutterDevice> flutterDevices = devices.map((Device device) {
+      return new FlutterDevice(device);
+    }).toList();
+
+    ResidentRunner runner;
     if (hotMode) {
       runner = new HotRunner(
-        device,
+        flutterDevices,
         target: targetFile,
         debuggingOptions: _createDebuggingOptions(),
         benchmarkMode: argResults['benchmark'],
@@ -279,7 +299,7 @@ class RunCommand extends RunCommandBase {
       );
     } else {
       runner = new ColdRunner(
-        device,
+        flutterDevices,
         target: targetFile,
         debuggingOptions: _createDebuggingOptions(),
         traceStartup: traceStartup,
@@ -288,11 +308,34 @@ class RunCommand extends RunCommandBase {
       );
     }
 
+    DateTime appStartedTime;
+    // Sync completer so the completing agent attaching to the resident doesn't 
+    // need to know about analytics. 
+    //
+    // Do not add more operations to the future.
+    final Completer<Null> appStartedTimeRecorder = new Completer<Null>.sync();
+    appStartedTimeRecorder.future.then(
+      (_) { appStartedTime = clock.now(); }
+    );
+
     final int result = await runner.run(
+      appStartedCompleter: appStartedTimeRecorder,
       route: route,
       shouldBuild: !runningWithPrebuiltApplication && argResults['build'],
     );
     if (result != 0)
       throwToolExit(null, exitCode: result);
+    return new FlutterCommandResult(
+      ExitStatus.success,
+      analyticsParameters: <String>[
+        hotMode ? 'hot' : 'cold',
+        getModeName(getBuildMode()),
+        devices.length == 1 
+            ? getNameForTargetPlatform(await devices[0].targetPlatform)
+            : 'multiple',
+        devices.length == 1 && await devices[0].isLocalEmulator ? 'emulator' : null
+      ],
+      endTimeOverride: appStartedTime,
+    );
   }
 }

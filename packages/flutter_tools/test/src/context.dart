@@ -23,6 +23,7 @@ import 'package:flutter_tools/src/usage.dart';
 import 'package:flutter_tools/src/version.dart';
 import 'package:mockito/mockito.dart';
 import 'package:process/process.dart';
+import 'package:quiver/time.dart';
 import 'package:test/test.dart';
 
 import 'common.dart';
@@ -55,7 +56,8 @@ void _defaultInitializeContext(AppContext testContext) {
     })
     ..putIfAbsent(SimControl, () => new MockSimControl())
     ..putIfAbsent(Usage, () => new MockUsage())
-    ..putIfAbsent(FlutterVersion, () => new MockFlutterVersion());
+    ..putIfAbsent(FlutterVersion, () => new MockFlutterVersion())
+    ..putIfAbsent(Clock, () => const Clock());
 }
 
 void testUsingContext(String description, dynamic testMethod(), {
@@ -127,11 +129,27 @@ class MockPortScanner extends PortScanner {
 class MockDeviceManager implements DeviceManager {
   List<Device> devices = <Device>[];
 
+  String _specifiedDeviceId;
+
   @override
-  String specifiedDeviceId;
+  String get specifiedDeviceId {
+    if (_specifiedDeviceId == null || _specifiedDeviceId == 'all')
+      return null;
+    return _specifiedDeviceId;
+  }
+
+  @override
+  set specifiedDeviceId(String id) {
+    _specifiedDeviceId = id;
+  }
 
   @override
   bool get hasSpecifiedDeviceId => specifiedDeviceId != null;
+
+  @override
+  bool get hasSpecifiedAllDevices {
+    return _specifiedDeviceId != null && _specifiedDeviceId == 'all';
+  }
 
   @override
   Stream<Device> getAllConnectedDevices() => new Stream<Device>.fromIterable(devices);
@@ -204,10 +222,7 @@ class MockUsage implements Usage {
   void sendEvent(String category, String parameter) { }
 
   @override
-  void sendTiming(String category, String variableName, Duration duration) { }
-
-  @override
-  UsageTimer startTimer(String event) => new _MockUsageTimer(event);
+  void sendTiming(String category, String variableName, Duration duration, { String label }) { }
 
   @override
   void sendException(dynamic exception, StackTrace trace) { }
@@ -222,14 +237,6 @@ class MockUsage implements Usage {
   void printWelcome() { }
 }
 
-class _MockUsageTimer implements UsageTimer {
-  _MockUsageTimer(this.event);
-
-  @override
-  final String event;
-
-  @override
-  void finish() { }
-}
-
 class MockFlutterVersion extends Mock implements FlutterVersion {}
+
+class MockClock extends Mock implements Clock {}

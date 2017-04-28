@@ -8,17 +8,20 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 
+import 'platform_channel.dart';
+
 typedef Future<ByteData> _MessageHandler(ByteData message);
 
 /// Sends binary messages to and receives binary messages from platform plugins.
 ///
 /// See also:
 ///
-/// * [BasicMessageChannel], which provides messaging services similar to
-/// [BinaryMessages], but with pluggable message codecs in support of sending
-/// strings or semi-structured messages.
-/// * [MethodChannel], which provides higher-level platform
-/// communication such as method invocations and event streams.
+/// * [BasicMessageChannel], which provides basic messaging services similar to
+///   `BinaryMessages`, but with pluggable message codecs in support of sending
+///   strings or semi-structured messages.
+/// * [MethodChannel], which provides platform communication using asynchronous
+///   method calls.
+/// * [EventChannel], which provides platform communication using event streams.
 ///
 /// See: <https://flutter.io/platform-channels/>
 class BinaryMessages {
@@ -54,7 +57,7 @@ class BinaryMessages {
   /// Typically called by [ServicesBinding] to handle platform messages received
   /// from [ui.window.onPlatformMessage].
   ///
-  /// To register a handler for a given message channel, see [PlatformChannel].
+  /// To register a handler for a given message channel, see [setMessageHandler].
   static Future<Null> handlePlatformMessage(
         String channel, ByteData data, ui.PlatformMessageResponseCallback callback) async {
     ByteData response;
@@ -89,7 +92,7 @@ class BinaryMessages {
   /// given channel, without decoding them.
   ///
   /// The given callback will replace the currently registered callback for that
-  /// channel, if any. To remove the handler, pass `null` as the `handler`
+  /// channel, if any. To remove the handler, pass null as the `handler`
   /// argument.
   ///
   /// The handler's return value, if non-null, is sent as a response, unencoded.
@@ -104,7 +107,7 @@ class BinaryMessages {
   /// this class, on the given channel, without decoding them.
   ///
   /// The given callback will replace the currently registered mock callback for
-  /// that channel, if any. To remove the mock handler, pass `null` as the
+  /// that channel, if any. To remove the mock handler, pass null as the
   /// `handler` argument.
   ///
   /// The handler's return value, if non-null, is used as a response, unencoded.
