@@ -15,13 +15,35 @@ import 'scroll_simulation.dart';
 
 export 'package:flutter/physics.dart' show Tolerance;
 
+/// Determines the physics of a [Scrollable] widget.
+///
+/// For example, determines how the [Scrollable] will behave when the user
+/// reaches the maximum scroll extent or when the user stops scrolling.
+///
+/// When starting a physics [Simulation], the current scroll position and
+/// velocity are used as the initial conditions for the particle in the
+/// simulation. The movement of the particle in the simulation is then used to
+/// determine the scroll position for the widget.
 @immutable
-abstract class ScrollPhysics {
-  const ScrollPhysics(this.parent);
+class ScrollPhysics {
+  /// Creates an object with the default scroll physics.
+  const ScrollPhysics({ this.parent });
 
+  /// If non-null, determines the default behavior for each method.
+  ///
+  /// If a subclass of [ScrollPhysics] does not override a method, that subclass
+  /// will inherit an implementation from this base class that defers to
+  /// [parent]. This mechanism lets you assemble novel combinations of
+  /// [ScrollPhysics] subclasses at runtime.
   final ScrollPhysics parent;
 
-  ScrollPhysics applyTo(ScrollPhysics parent);
+  /// Return a [ScrollPhysics] with the same [runtimeType] where the [parent]
+  /// has been replaced with the given [parent].
+  ///
+  /// The returned object will combine some of the behaviors from this
+  /// [ScrollPhysics] instance and some of the behaviors from the given
+  /// [ScrollPhysics] instance.
+  ScrollPhysics applyTo(ScrollPhysics parent) => new ScrollPhysics(parent: parent);
 
   /// Used by [DragScrollActivity] and other user-driven activities to
   /// convert an offset in logical pixels as provided by the [DragUpdateDetails]
@@ -111,6 +133,7 @@ abstract class ScrollPhysics {
     ratio: 1.1,
   );
 
+  /// The spring to use for ballistic simulations.
   SpringDescription get spring => parent?.spring ?? _kDefaultSpring;
 
   /// The default accuracy to which scrolling is computed.
@@ -121,6 +144,7 @@ abstract class ScrollPhysics {
     distance: 1.0 / ui.window.devicePixelRatio // logical pixels
   );
 
+  /// The tolerance to use for ballistic simulations.
   Tolerance get tolerance => parent?.tolerance ?? _kDefaultTolerance;
 
   /// The minimum distance an input pointer drag must have moved to
@@ -172,7 +196,7 @@ abstract class ScrollPhysics {
 ///    clamping behavior.
 class BouncingScrollPhysics extends ScrollPhysics {
   /// Creates scroll physics that bounce back from the edge.
-  const BouncingScrollPhysics({ ScrollPhysics parent }) : super(parent);
+  const BouncingScrollPhysics({ ScrollPhysics parent }) : super(parent: parent);
 
   @override
   BouncingScrollPhysics applyTo(ScrollPhysics parent) => new BouncingScrollPhysics(parent: parent);
@@ -251,7 +275,7 @@ class BouncingScrollPhysics extends ScrollPhysics {
 class ClampingScrollPhysics extends ScrollPhysics {
   /// Creates scroll physics that prevent the scroll offset from exceeding the
   /// bounds of the content..
-  const ClampingScrollPhysics({ ScrollPhysics parent }) : super(parent);
+  const ClampingScrollPhysics({ ScrollPhysics parent }) : super(parent: parent);
 
   @override
   ClampingScrollPhysics applyTo(ScrollPhysics parent) => new ClampingScrollPhysics(parent: parent);
@@ -325,13 +349,15 @@ class ClampingScrollPhysics extends ScrollPhysics {
 ///
 /// See also:
 ///
+///  * [ScrollPhysics], which can be used instead of this class when the default
+///    behavior is desired instead.
 ///  * [BouncingScrollPhysics], which provides the bouncing overscroll behavior
 ///    found on iOS.
 ///  * [ClampingScrollPhysics], which provides the clamping overscroll behavior
 ///    found on Android.
 class AlwaysScrollableScrollPhysics extends ScrollPhysics {
   /// Creates scroll physics that always lets the user scroll.
-  const AlwaysScrollableScrollPhysics({ ScrollPhysics parent }) : super(parent);
+  const AlwaysScrollableScrollPhysics({ ScrollPhysics parent }) : super(parent: parent);
 
   @override
   AlwaysScrollableScrollPhysics applyTo(ScrollPhysics parent) => new AlwaysScrollableScrollPhysics(parent: parent);

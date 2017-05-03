@@ -65,6 +65,7 @@ TaskFunction createGalleryBackButtonMemoryTest() {
   return new AndroidBackButtonMemoryTest(
     '${flutterDirectory.path}/examples/flutter_gallery',
     'io.flutter.examples.gallery',
+    'io.flutter.examples.gallery.MainActivity',
   );
 }
 
@@ -72,6 +73,9 @@ TaskFunction createFlutterViewStartupTest() {
   return new StartupTest(
       '${flutterDirectory.path}/examples/flutter_view',
       reportMetrics: false,
+      // This project has a non-standard CocoaPods Podfile. Run pod install
+      // before building the project.
+      runPodInstall: true,
   );
 }
 
@@ -79,10 +83,14 @@ TaskFunction createFlutterViewStartupTest() {
 class StartupTest {
   static const Duration _startupTimeout = const Duration(minutes: 5);
 
-  StartupTest(this.testDirectory, { this.reportMetrics: true });
+  StartupTest(this.testDirectory, { this.reportMetrics: true, this.runPodInstall: false });
 
   final String testDirectory;
   final bool reportMetrics;
+  /// Used to trigger a `pod install` when the project has a custom Podfile and
+  /// flutter build ios won't automatically run `pod install` via the managed
+  /// plugin system.
+  final bool runPodInstall;
 
   Future<TaskResult> call() async {
     return await inDirectory(testDirectory, () async {
@@ -90,6 +98,8 @@ class StartupTest {
       await flutter('packages', options: <String>['get']);
 
       if (deviceOperatingSystem == DeviceOperatingSystem.ios) {
+        if (runPodInstall)
+          await runPodInstallForCustomPodfile(testDirectory);
         await prepareProvisioningCertificates(testDirectory);
         // This causes an Xcode project to be created.
         await flutter('build', options: <String>['ios', '--profile']);
@@ -291,8 +301,9 @@ class MemoryTest {
 class AndroidBackButtonMemoryTest {
   final String testDirectory;
   final String packageName;
+  final String activityName;
 
-  AndroidBackButtonMemoryTest(this.testDirectory, this.packageName);
+  AndroidBackButtonMemoryTest(this.testDirectory, this.packageName, this.activityName);
 
   Future<TaskResult> call() {
     return inDirectory(testDirectory, () async {
@@ -323,7 +334,7 @@ class AndroidBackButtonMemoryTest {
       for (int i = 0; i < 10; i++) {
         await device.shellExec('input', <String>['keyevent', 'KEYCODE_BACK']);
         await new Future<Null>.delayed(const Duration(milliseconds: 1000));
-        final String output = await device.shellEval('am', <String>['start', '-n', 'io.flutter.examples.gallery/io.flutter.app.FlutterActivity']);
+        final String output = await device.shellEval('am', <String>['start', '-n', '$packageName/$activityName']);
         print(output);
         if (output.contains('Error'))
           return new TaskResult.failure('unable to launch activity');
