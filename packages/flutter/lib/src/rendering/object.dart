@@ -456,7 +456,7 @@ class PaintingContext {
   /// * `color` is the background color.
   /// * `painter` is a callback that will paint with the `clipRRect` applied. This
   ///   function calls the `painter` synchronously.
-  void pushPhysicalModel(bool needsCompositing, Offset offset, Rect bounds, RRect clipRRect, int elevation, Color color, PaintingContextCallback painter) {
+  void pushPhysicalModel(bool needsCompositing, Offset offset, Rect bounds, RRect clipRRect, double elevation, Color color, PaintingContextCallback painter) {
     final Rect offsetBounds = bounds.shift(offset);
     final RRect offsetClipRRect = clipRRect.shift(offset);
     if (needsCompositing) {
@@ -1356,14 +1356,14 @@ abstract class RenderObject extends AbstractNode implements HitTestTarget {
   /// relevant to itself and to any other nodes who happen to know exactly what
   /// the data means. The parent data is opaque to the child.
   ///
-  /// - The parent data field must not be directly set, except by calling
-  ///   [setupParentData] on the parent node.
-  /// - The parent data can be set before the child is added to the parent, by
-  ///   calling [setupParentData] on the future parent node.
-  /// - The conventions for using the parent data depend on the layout protocol
-  ///   used between the parent and child. For example, in box layout, the
-  ///   parent data is completely opaque but in sector layout the child is
-  ///   permitted to read some fields of the parent data.
+  ///  * The parent data field must not be directly set, except by calling
+  ///    [setupParentData] on the parent node.
+  ///  * The parent data can be set before the child is added to the parent, by
+  ///    calling [setupParentData] on the future parent node.
+  ///  * The conventions for using the parent data depend on the layout protocol
+  ///    used between the parent and child. For example, in box layout, the
+  ///    parent data is completely opaque but in sector layout the child is
+  ///    permitted to read some fields of the parent data.
   ParentData parentData;
 
   /// Override to setup parent data correctly for your children.
