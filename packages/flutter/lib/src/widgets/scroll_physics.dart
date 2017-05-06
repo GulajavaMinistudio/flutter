@@ -37,17 +37,39 @@ class ScrollPhysics {
   /// [ScrollPhysics] subclasses at runtime.
   final ScrollPhysics parent;
 
-  /// Return a [ScrollPhysics] with the same [runtimeType] where the [parent]
-  /// has been replaced with the given [parent].
+  /// If [parent] is null then return ancestor, otherwise recursively build a
+  /// ScrollPhysics that has [ancestor] as its parent.
+  ///
+  /// This method is typically used to define [applyTo] methods like:
+  /// ```dart
+  /// FooScrollPhysics applyTo(ScrollPhysics ancestor) {
+  ///   return new FooScrollPhysics(parent: buildParent(ancestor));
+  /// }
+  /// ```
+  @protected
+  ScrollPhysics buildParent(ScrollPhysics ancestor) => parent?.applyTo(ancestor) ?? ancestor;
+
+  /// If [parent] is null then return a [ScrollPhysics] with the same
+  /// [runtimeType] where the [parent] has been replaced with the [ancestor].
+  ///
+  /// If this scroll physics object already has a parent, then this method
+  /// is applied recursively and ancestor will appear at the end of the
+  /// existing chain of parents.
   ///
   /// The returned object will combine some of the behaviors from this
-  /// [ScrollPhysics] instance and some of the behaviors from the given
-  /// [ScrollPhysics] instance.
-  ScrollPhysics applyTo(ScrollPhysics parent) => new ScrollPhysics(parent: parent);
+  /// [ScrollPhysics] instance and some of the behaviors from [ancestor].
+  ///
+  /// See also:
+  ///
+  ///   * [buildParent], a utility method that's often used to define [applyTo]
+  ///     methods for ScrollPhysics subclasses.
+  ScrollPhysics applyTo(ScrollPhysics ancestor) {
+    return new ScrollPhysics(parent: buildParent(ancestor));
+  }
 
   /// Used by [DragScrollActivity] and other user-driven activities to
   /// convert an offset in logical pixels as provided by the [DragUpdateDetails]
-  /// into a delta to apply using [setPixels].
+  /// into a delta to apply using [ScrollActivityDelegate.setPixels].
   ///
   /// This is used by some [ScrollPosition] subclasses to apply friction during
   /// overscroll situations.
@@ -86,8 +108,8 @@ class ScrollPhysics {
   /// is updated, to determine how much of the offset is to be clamped off and
   /// sent to [ScrollPosition.didOverscrollBy].
   ///
-  /// The `value` argument is guaranteed to not equal [pixels] when this is
-  /// called.
+  /// The `value` argument is guaranteed to not equal the [ScrollMetrics.pixels]
+  /// of the `position` argument when this is called.
   ///
   /// It is possible for this method to be called when the `position` describes
   /// an already-out-of-bounds position. In that case, the boundary conditions
@@ -189,8 +211,8 @@ class ScrollPhysics {
 ///
 /// See also:
 ///
-///  * [ViewportScrollBehavior], which uses this to provide the iOS component of
-///    its scroll behavior.
+///  * [ScrollConfiguration], which uses this to provide the the default
+///    scroll behavior on iOS.
 ///  * [ClampingScrollPhysics], which is the analogous physics for Android's
 ///    clamping behavior.
 class BouncingScrollPhysics extends ScrollPhysics {
@@ -198,7 +220,9 @@ class BouncingScrollPhysics extends ScrollPhysics {
   const BouncingScrollPhysics({ ScrollPhysics parent }) : super(parent: parent);
 
   @override
-  BouncingScrollPhysics applyTo(ScrollPhysics parent) => new BouncingScrollPhysics(parent: parent);
+  BouncingScrollPhysics applyTo(ScrollPhysics ancestor) {
+    return new BouncingScrollPhysics(parent: buildParent(ancestor));
+  }
 
   /// The multiple applied to overscroll to make it appear that scrolling past
   /// the edge of the scrollable contents is harder than scrolling the list.
@@ -264,11 +288,11 @@ class BouncingScrollPhysics extends ScrollPhysics {
 ///
 /// See also:
 ///
-///  * [ViewportScrollBehavior], which uses this to provide the Android component
-///    of its scroll behavior.
+///  * [ScrollConfiguration], which uses this to provide the the default
+///    scroll behavior on Android.
 ///  * [BouncingScrollPhysics], which is the analogous physics for iOS' bouncing
 ///    behavior.
-///  * [GlowingOverscrollIndicator], which is used by [ViewportScrollBehavior] to
+///  * [GlowingOverscrollIndicator], which is used by [ScrollConfiguration] to
 ///    provide the glowing effect that is usually found with this clamping effect
 ///    on Android.
 class ClampingScrollPhysics extends ScrollPhysics {
@@ -277,7 +301,9 @@ class ClampingScrollPhysics extends ScrollPhysics {
   const ClampingScrollPhysics({ ScrollPhysics parent }) : super(parent: parent);
 
   @override
-  ClampingScrollPhysics applyTo(ScrollPhysics parent) => new ClampingScrollPhysics(parent: parent);
+  ClampingScrollPhysics applyTo(ScrollPhysics ancestor) {
+    return new ClampingScrollPhysics(parent: buildParent(ancestor));
+  }
 
   @override
   double applyBoundaryConditions(ScrollMetrics position, double value) {
@@ -359,8 +385,34 @@ class AlwaysScrollableScrollPhysics extends ScrollPhysics {
   const AlwaysScrollableScrollPhysics({ ScrollPhysics parent }) : super(parent: parent);
 
   @override
-  AlwaysScrollableScrollPhysics applyTo(ScrollPhysics parent) => new AlwaysScrollableScrollPhysics(parent: parent);
+  AlwaysScrollableScrollPhysics applyTo(ScrollPhysics ancestor) {
+    return new AlwaysScrollableScrollPhysics(parent: buildParent(ancestor));
+  }
+
 
   @override
   bool shouldAcceptUserOffset(ScrollMetrics position) => true;
+}
+
+/// Scroll physics that does not allow the user to scroll.
+///
+/// See also:
+///
+///  * [ScrollPhysics], which can be used instead of this class when the default
+///    behavior is desired instead.
+///  * [BouncingScrollPhysics], which provides the bouncing overscroll behavior
+///    found on iOS.
+///  * [ClampingScrollPhysics], which provides the clamping overscroll behavior
+///    found on Android.
+class NeverScrollableScrollPhysics extends ScrollPhysics {
+  /// Creates scroll physics that does not let the user scroll.
+  const NeverScrollableScrollPhysics({ ScrollPhysics parent }) : super(parent: parent);
+
+  @override
+  NeverScrollableScrollPhysics applyTo(ScrollPhysics ancestor) {
+    return new NeverScrollableScrollPhysics(parent: buildParent(ancestor));
+  }
+
+  @override
+  bool shouldAcceptUserOffset(ScrollMetrics position) => false;
 }

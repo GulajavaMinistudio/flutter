@@ -6,6 +6,7 @@ import 'dart:async';
 
 import '../android/android.dart' as android;
 import '../android/android_sdk.dart' as android_sdk;
+import '../android/gradle.dart' as gradle;
 import '../base/common.dart';
 import '../base/file_system.dart';
 import '../base/utils.dart';
@@ -91,7 +92,10 @@ class CreateCommand extends FlutterCommand {
     final bool generatePlugin = argResults['plugin'];
 
     final Directory projectDir = fs.directory(argResults.rest.first);
-    final String dirPath = fs.path.normalize(projectDir.absolute.path);
+    String dirPath = fs.path.normalize(projectDir.absolute.path);
+    // TODO(goderbauer): Work-around for: https://github.com/dart-lang/path/issues/24
+    if (fs.path.basename(dirPath) == '.')
+      dirPath = fs.path.dirname(dirPath);
     final String projectName = _normalizeProjectName(fs.path.basename(dirPath));
 
     String error =_validateProjectDir(dirPath, flutterRoot: flutterRoot);
@@ -120,6 +124,9 @@ class CreateCommand extends FlutterCommand {
 
       if (argResults['pub'])
         await pubGet(directory: dirPath);
+
+      if (android_sdk.androidSdk != null)
+        gradle.updateLocalProperties(projectPath: dirPath);
 
       appPath = fs.path.join(dirPath, 'example');
       final String androidPluginIdentifier = templateContext['androidIdentifier'];
@@ -152,6 +159,9 @@ class CreateCommand extends FlutterCommand {
       await pubGet(directory: appPath);
       injectPlugins(directory: appPath);
     }
+
+    if (android_sdk.androidSdk != null)
+      gradle.updateLocalProperties(projectPath: appPath);
 
     printStatus('');
 

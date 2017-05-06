@@ -107,7 +107,22 @@ class Scrollable extends StatefulWidget {
   /// For example, determines how the widget continues to animate after the
   /// user stops dragging the scroll view.
   ///
-  /// Defaults to matching platform conventions.
+  /// Defaults to matching platform conventions via the physics provided from
+  /// the ambient [ScrollConfiguration].
+  ///
+  /// The physics can be changed dynamically, but new physics will only take
+  /// effect if the _class_ of the provided object changes. Merely constructing
+  /// a new instance with a different configuration is insufficient to cause the
+  /// physics to be reapplied. (This is because the final object used is
+  /// generated dynamically, which can be relatively expensive, and it would be
+  /// inefficient to speculatively create this object each frame to see if the
+  /// physics should be updated.)
+  ///
+  /// See also:
+  ///
+  ///  * [AlwaysScrollableScrollPhysics], which can be used to indicate that the
+  ///    scrollable should react to scroll requests (and possible overscroll)
+  ///    even if the scrollable's contents fit without scrolling being necessary.
   final ScrollPhysics physics;
 
   /// Builds the viewport through which the scrollable content is displayed.
@@ -256,8 +271,16 @@ class ScrollableState extends State<Scrollable> with TickerProviderStateMixin
   }
 
   bool _shouldUpdatePosition(Scrollable oldWidget) {
-    return widget.physics?.runtimeType != oldWidget.physics?.runtimeType
-        || widget.controller?.runtimeType != oldWidget.controller?.runtimeType;
+    ScrollPhysics newPhysics = widget.physics;
+    ScrollPhysics oldPhysics = oldWidget.physics;
+    do {
+      if (newPhysics?.runtimeType != oldPhysics?.runtimeType)
+        return true;
+      newPhysics = newPhysics?.parent;
+      oldPhysics = oldPhysics?.parent;
+    } while (newPhysics != null || oldPhysics != null);
+
+    return widget.controller?.runtimeType != oldWidget.controller?.runtimeType;
   }
 
   @override
