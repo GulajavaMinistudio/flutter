@@ -13,7 +13,7 @@ import 'text_editing.dart';
 
 export 'dart:ui' show TextAffinity;
 
-/// For which type of information to optimize the text input control.
+/// The type of information for which to optimize the text input control.
 enum TextInputType {
   /// Optimize for textual information.
   text,
@@ -28,7 +28,7 @@ enum TextInputType {
   datetime,
 }
 
-/// A action the user has requested the text input control to perform.
+/// An action the user has requested the text input control to perform.
 enum TextInputAction {
   /// Complete the text input operation.
   done,
@@ -47,9 +47,9 @@ class TextInputConfiguration {
   const TextInputConfiguration({
     this.inputType: TextInputType.text,
     this.actionLabel,
-  });
+  }) : assert(inputType != null);
 
-  /// For which type of information to optimize the text input control.
+  /// The type of information for which to optimize the text input control.
   final TextInputType inputType;
 
   /// What text to display in the text input control's action button.
@@ -87,7 +87,9 @@ class TextEditingValue {
     this.text: '',
     this.selection: const TextSelection.collapsed(offset: -1),
     this.composing: TextRange.empty
-  });
+  }) : assert(text != null),
+       assert(selection != null),
+       assert(composing != null);
 
   /// Creates an instance of this class from a JSON object.
   factory TextEditingValue.fromJSON(Map<String, dynamic> encoded) {
