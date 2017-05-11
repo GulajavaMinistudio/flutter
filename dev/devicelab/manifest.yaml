@@ -25,7 +25,9 @@
 #
 # * flaky: boolean true or false
 #       whether the task is considered flaky; the result of running a flaky task does not affect
-#       the overall build status.
+#       the overall build status. Tests should be marked flaky when newly added, until they have
+#       been proved for a few cycles. Tests that are actually flaky but not being actively worked
+#       on should be hidden because they just cause confusion otherwise.
 # * timeout_in_minutes: integer
 #       a custom task timeout, specified in minutes.
 
@@ -81,7 +83,6 @@ tasks:
       Android.
     stage: devicelab
     required_agent_capabilities: ["has-android-device"]
-    flaky: true
 
   channels_integration_test:
     description: >
@@ -113,7 +114,6 @@ tasks:
       Android.
     stage: devicelab
     required_agent_capabilities: ["has-android-device"]
-    flaky: true
 
   hot_mode_dev_cycle__benchmark:
     description: >
@@ -158,6 +158,13 @@ tasks:
     stage: devicelab
     required_agent_capabilities: ["has-android-device"]
 
+  integration_ui:
+    description: >
+      Runs end-to-end Flutter tests on Android.
+    stage: devicelab
+    required_agent_capabilities: ["has-android-device"]
+    flaky: true
+
   # iOS on-device tests
 
   channels_integration_test_ios:
@@ -165,7 +172,6 @@ tasks:
       Checks that platform channels work on iOS.
     stage: devicelab_ios
     required_agent_capabilities: ["has-ios-device"]
-    flaky: true
 
   platform_channel_sample_test_ios:
     description: >
@@ -180,17 +186,19 @@ tasks:
     stage: devicelab_ios
     required_agent_capabilities: ["has-ios-device"]
 
-  flutter_gallery_ios__start_up:
-    description: >
-      Measures the startup time of the Flutter Gallery app on iOS.
-    stage: devicelab_ios
-    required_agent_capabilities: ["has-ios-device"]
+#  flutter_gallery_ios__start_up:
+#    description: >
+#      Measures the startup time of the Flutter Gallery app on iOS.
+#    stage: devicelab_ios
+#    required_agent_capabilities: ["has-ios-device"]
+#    flaky: true    
 
-  complex_layout_ios__start_up:
-    description: >
-      Measures the startup time of the Complex Layout sample app on iOS.
-    stage: devicelab_ios
-    required_agent_capabilities: ["has-ios-device"]
+#  complex_layout_ios__start_up:
+#    description: >
+#      Measures the startup time of the Complex Layout sample app on iOS.
+#    stage: devicelab_ios
+#    required_agent_capabilities: ["has-ios-device"]
+#    flaky: true    
 
   flutter_gallery_ios__transition_perf:
     description: >
@@ -205,19 +213,27 @@ tasks:
     stage: devicelab_ios
     required_agent_capabilities: ["has-ios-device"]
 
-  microbenchmarks_ios:
-    description: >
-      Runs benchmarks from dev/benchmarks/microbenchmarks on iOS.
-    stage: devicelab_ios
-    required_agent_capabilities: ["has-ios-device"]
-    timeout_in_minutes: 30
-    flaky: true
+#  microbenchmarks_ios:
+#    description: >
+#      Runs benchmarks from dev/benchmarks/microbenchmarks on iOS.
+#    stage: devicelab_ios
+#    required_agent_capabilities: ["has-ios-device"]
+#    timeout_in_minutes: 30
+#    flaky: true
 
-  flutter_view_ios__start_up:
+#  flutter_view_ios__start_up:
+#    description: >
+#      Verifies that Flutter View can be used from an iOS project.
+#    stage: devicelab_ios
+#    required_agent_capabilities: ["has-ios-device"]
+#    flaky: true    
+
+  integration_ui_ios:
     description: >
-      Verifies that Flutter View can be used from an iOS project.
+      Runs end-to-end Flutter tests on iOS.
     stage: devicelab_ios
     required_agent_capabilities: ["has-ios-device"]
+    flaky: true
 
   # Tests running on Windows host
 
@@ -226,7 +242,6 @@ tasks:
       Checks that platform channels work when app is launched from Windows.
     stage: devicelab_win
     required_agent_capabilities: ["windows"]
-    flaky: true
 
   flutter_gallery_win__build:
     description: >
@@ -234,11 +249,9 @@ tasks:
       Gallery on Windows.
     stage: devicelab_win
     required_agent_capabilities: ["windows"]
-    flaky: true
 
   hot_mode_dev_cycle_win__benchmark:
     description: >
       Measures the performance of Dart VM hot patching feature on Windows.
     stage: devicelab_win
     required_agent_capabilities: ["windows"]
-    flaky: true
