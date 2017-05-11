@@ -384,7 +384,7 @@ class BoxConstraints extends Constraints {
   @override
   bool debugAssertIsValid({
     bool isAppliedConstraint: false,
-    InformationCollector informationCollector
+    InformationCollector informationCollector,
   }) {
     assert(() {
       void throwError(String message) {
@@ -504,7 +504,9 @@ class BoxHitTestEntry extends HitTestEntry {
   /// Creates a box hit test entry.
   ///
   /// The [localPosition] argument must not be null.
-  const BoxHitTestEntry(RenderBox target, this.localPosition) : super(target);
+  const BoxHitTestEntry(RenderBox target, this.localPosition)
+      : assert(localPosition != null),
+        super(target);
 
   @override
   RenderBox get target => super.target;

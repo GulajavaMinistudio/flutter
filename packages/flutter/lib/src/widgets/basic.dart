@@ -198,10 +198,32 @@ class BackdropFilter extends SingleChildRenderObjectWidget {
 /// a child, they attempt to size themselves to the [size], which defaults to
 /// [Size.zero].
 ///
+/// ## Sample code
+///
+/// This example shows how the sample custom painter shown at [CustomPainter]
+/// could be used in a [CustomPaint] widget to display a background to some
+/// text.
+///
+/// ```dart
+/// new CustomPaint(
+///   painter: new Sky(),
+///   child: new Center(
+///     child: new Text(
+///       'Once upon a time...',
+///       style: const TextStyle(
+///         fontSize: 40.0,
+///         fontWeight: FontWeight.w900,
+///         color: const Color(0xFFFFFFFF),
+///       ),
+///     ),
+///   ),
+/// ),
+/// ```
+///
 /// See also:
 ///
-///  * [CustomPainter].
-///  * [Canvas].
+///  * [CustomPainter], the class to extend when creating custom painters.
+///  * [Canvas], the class that a custom painter uses to paint.
 class CustomPaint extends SingleChildRenderObjectWidget {
   /// Creates a widget that delegates its painting.
   const CustomPaint({ Key key, this.painter, this.foregroundPainter, this.size: Size.zero, Widget child })
@@ -306,6 +328,13 @@ class ClipRect extends SingleChildRenderObjectWidget {
   void didUnmountRenderObject(RenderClipRect renderObject) {
     renderObject.clipper = null;
   }
+
+  @override
+  void debugFillDescription(List<String> description) {
+    super.debugFillDescription(description);
+    if (clipper != null)
+      description.add('clipper: $clipper');
+  }
 }
 
 /// A widget that clips its child using a rounded rectangle.
@@ -355,6 +384,15 @@ class ClipRRect extends SingleChildRenderObjectWidget {
       ..borderRadius = borderRadius
       ..clipper = clipper;
   }
+
+  @override
+  void debugFillDescription(List<String> description) {
+    super.debugFillDescription(description);
+    if (borderRadius != null)
+      description.add('$borderRadius');
+    if (clipper != null)
+      description.add('clipper: $clipper');
+  }
 }
 
 /// A widget that clips its child using an oval.
@@ -400,6 +438,13 @@ class ClipOval extends SingleChildRenderObjectWidget {
   void didUnmountRenderObject(RenderClipOval renderObject) {
     renderObject.clipper = null;
   }
+
+  @override
+  void debugFillDescription(List<String> description) {
+    super.debugFillDescription(description);
+    if (clipper != null)
+      description.add('clipper: $clipper');
+  }
 }
 
 /// A widget that clips its child using a path.
@@ -442,20 +487,33 @@ class ClipPath extends SingleChildRenderObjectWidget {
   void didUnmountRenderObject(RenderClipPath renderObject) {
     renderObject.clipper = null;
   }
+
+  @override
+  void debugFillDescription(List<String> description) {
+    super.debugFillDescription(description);
+    if (clipper != null)
+      description.add('clipper: $clipper');
+  }
 }
 
 /// A widget representing a physical layer that clips its children to a shape.
+///
+/// Physical layers cast shadows based on an [elevation] which is nominally in
+/// logical pixels, coming vertically out of the rendering surface.
 class PhysicalModel extends SingleChildRenderObjectWidget {
   /// Creates a physical model with a rounded-rectangular clip.
+  ///
+  /// The [color] is required; physical things have a color.
+  ///
+  /// The [shape], [elevation], and [color] must not be null.
   const PhysicalModel({
     Key key,
-    @required this.shape,
-    this.borderRadius: BorderRadius.zero,
-    @required this.elevation,
+    this.shape: BoxShape.rectangle,
+    this.borderRadius,
+    this.elevation: 0.0,
     @required this.color,
     Widget child,
   }) : assert(shape != null),
-       assert(borderRadius != null),
        assert(elevation != null),
        assert(color != null),
        super(key: key, child: child);
@@ -487,6 +545,15 @@ class PhysicalModel extends SingleChildRenderObjectWidget {
       ..borderRadius = borderRadius
       ..elevation = elevation
       ..color = color;
+  }
+
+  @override
+  void debugFillDescription(List<String> description) {
+    super.debugFillDescription(description);
+    description.add('shape: $shape');
+    description.add('borderRadius: $borderRadius');
+    description.add('elevation: ${elevation.toStringAsFixed(1)}');
+    description.add('color: $color');
   }
 }
 
@@ -1689,6 +1756,14 @@ class Stack extends MultiChildRenderObjectWidget {
       ..alignment = alignment
       ..fit = fit
       ..overflow = overflow;
+  }
+
+  @override
+  void debugFillDescription(List<String> description) {
+    super.debugFillDescription(description);
+    description.add('alignment: $alignment');
+    description.add('fit: $fit');
+    description.add('overflow: $overflow');
   }
 }
 
