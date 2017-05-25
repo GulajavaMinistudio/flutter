@@ -50,6 +50,7 @@ void initialize() {
   sampleDirectory = new Directory('lib');
   testDirectory = new Directory('test');
   driverDirectory = new Directory('test_driver');
+  outputDirectory.createSync();
   sampleTemplate = sampleTemplateFile.readAsStringSync();
   screenshotTemplate = screenshotTemplateFile.readAsStringSync();
   screenshotDriverTemplate = screenshotDriverTemplateFile.readAsStringSync();
@@ -122,7 +123,6 @@ class SampleGenerator {
 
     final RegExp keywordsRE = new RegExp(sampleCatalogKeywords, multiLine: true);
     final List<Match> keywordMatches = keywordsRE.allMatches(comment).toList();
-    // TBD: fix error generation
     if (keywordMatches.isEmpty)
       throw new SampleError('did not find any keywords in the Sample Catalog comment in $sourceFile');
 
@@ -135,6 +135,8 @@ class SampleGenerator {
       );
       commentValues[keyword.toLowerCase()] = value.trim();
     }
+    commentValues['name'] = sourceName;
+    commentValues['path'] = 'examples/catalog/${sourceFile.path}';
     commentValues['source'] = sourceCode.trim();
 
     return true;
@@ -159,6 +161,10 @@ void generate() {
     }
   });
 
+  samples.sort((SampleGenerator a, SampleGenerator b) {
+    return a.sourceName.compareTo(b.sourceName);
+  });
+
   writeExpandedTemplate(
     outputFile('screenshot.dart', driverDirectory),
     screenshotTemplate,
@@ -177,14 +183,12 @@ void generate() {
     screenshotDriverTemplate,
     <String, String>{
       'paths': samples.map((SampleGenerator sample) {
-        return "'${outputFile(sample.sourceName + '.png').path}'";
+        return "'${outputFile('\${prefix}' + sample.sourceName + '.png').path}'";
       }).toList().join(',\n'),
     },
   );
 
-  final List<String> flutterDriveArgs = <String>['drive', 'test_driver/screenshot.dart'];
-  logMessage('Generating screenshots with: flutter ${flutterDriveArgs.join(" ")}');
-  Process.runSync('flutter', flutterDriveArgs);
+  // To generate the screenshots: flutter drive test_driver/screenshot.dart
 }
 
 void main(List<String> args) {
