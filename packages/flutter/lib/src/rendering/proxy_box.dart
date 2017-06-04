@@ -50,7 +50,11 @@ class RenderProxyBox extends RenderBox with RenderObjectWithChildMixin<RenderBox
 /// of [RenderProxyBox] is desired but inheriting from [RenderProxyBox] is
 /// impractical (e.g. because you want to mix in other classes as well).
 // TODO(ianh): Remove this class once https://github.com/dart-lang/sdk/issues/15101 is fixed
-abstract class RenderProxyBoxMixin implements RenderBox, RenderObjectWithChildMixin<RenderBox> {
+abstract class RenderProxyBoxMixin extends RenderBox with RenderObjectWithChildMixin<RenderBox> {
+  // This class is intended to be used as a mixin, and should not be
+  // extended directly.
+  factory RenderProxyBoxMixin._() => null;
+
   @override
   void setupParentData(RenderObject child) {
     // We don't actually use the offset argument in BoxParentData, so let's
@@ -830,8 +834,8 @@ class RenderShaderMask extends RenderProxyBox {
   void paint(PaintingContext context, Offset offset) {
     if (child != null) {
       assert(needsCompositing);
-      final Rect rect = Offset.zero & size;
-      context.pushShaderMask(offset, _shaderCallback(rect), rect, _blendMode, super.paint);
+      final Shader shader = _shaderCallback(offset & size);
+      context.pushShaderMask(offset, shader, Offset.zero & size, _blendMode, super.paint);
     }
   }
 }
@@ -2885,6 +2889,18 @@ class RenderSemanticsAnnotations extends RenderProxyBox {
     if (label != null)
       node.label = label;
   }
+}
+
+/// Causes the semantics of all siblings and cousins painted before it in the
+/// same semantic container to be dropped.
+///
+/// This is useful in a stack where an overlay should prevent interactions
+/// with the underlying layers.
+class RenderBlockSemantics extends RenderProxyBox {
+  RenderBlockSemantics({ RenderBox child }) : super(child);
+
+  @override
+  bool get isBlockingSemanticsOfPreviouslyPaintedNodes => true;
 }
 
 /// Causes the semantics of all descendants to be merged into this
