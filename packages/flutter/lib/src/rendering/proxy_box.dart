@@ -544,7 +544,10 @@ class RenderAspectRatio extends RenderProxyBox {
 /// you would like a child that would otherwise attempt to expand infinitely to
 /// instead size itself to a more reasonable width.
 ///
-/// This class is relatively expensive. Avoid using it where possible.
+/// This class is relatively expensive, because it adds a speculative layout
+/// pass before the final layout phase. Avoid using it where possible. In the
+/// worst case, this render object can result in a layout that is O(N²) in the
+/// depth of the tree.
 class RenderIntrinsicWidth extends RenderProxyBox {
   /// Creates a render object that sizes itself to its child's intrinsic width.
   RenderIntrinsicWidth({
@@ -650,7 +653,10 @@ class RenderIntrinsicWidth extends RenderProxyBox {
 /// you would like a child that would otherwise attempt to expand infinitely to
 /// instead size itself to a more reasonable height.
 ///
-/// This class is relatively expensive. Avoid using it where possible.
+/// This class is relatively expensive, because it adds a speculative layout
+/// pass before the final layout phase. Avoid using it where possible. In the
+/// worst case, this render object can result in a layout that is O(N²) in the
+/// depth of the tree.
 class RenderIntrinsicHeight extends RenderProxyBox {
   /// Creates a render object that sizes itself to its child's intrinsic height.
   RenderIntrinsicHeight({
@@ -2867,10 +2873,12 @@ class RenderSemanticsAnnotations extends RenderProxyBox {
     RenderBox child,
     bool container: false,
     bool checked,
-    String label
+    bool selected,
+    String label,
   }) : assert(container != null),
        _container = container,
        _checked = checked,
+       _selected = selected,
        _label = label,
        super(child);
 
@@ -2894,8 +2902,8 @@ class RenderSemanticsAnnotations extends RenderProxyBox {
     markNeedsSemanticsUpdate();
   }
 
-  /// If non-null, sets the "hasCheckedState" semantic to true and the
-  /// "isChecked" semantic to the given value.
+  /// If non-null, sets the [SemanticsNode.hasCheckedState] semantic to true and
+  /// the [SemanticsNode.isChecked] semantic to the given value.
   bool get checked => _checked;
   bool _checked;
   set checked(bool value) {
@@ -2906,7 +2914,19 @@ class RenderSemanticsAnnotations extends RenderProxyBox {
     markNeedsSemanticsUpdate(onlyChanges: (value != null) == hadValue);
   }
 
-  /// If non-null, sets the "label" semantic to the given value.
+  /// If non-null, sets the [SemanticsNode.isSelected] semantic to the given
+  /// value.
+  bool get selected => _selected;
+  bool _selected;
+  set selected(bool value) {
+    if (selected == value)
+      return;
+    final bool hadValue = selected != null;
+    _selected = value;
+    markNeedsSemanticsUpdate(onlyChanges: (value != null) == hadValue);
+  }
+
+  /// If non-null, sets the [SemanticsNode.label] semantic to the given value.
   String get label => _label;
   String _label;
   set label(String value) {
@@ -2921,7 +2941,7 @@ class RenderSemanticsAnnotations extends RenderProxyBox {
   bool get isSemanticBoundary => container;
 
   @override
-  SemanticsAnnotator get semanticsAnnotator => checked != null || label != null ? _annotate : null;
+  SemanticsAnnotator get semanticsAnnotator => checked != null || selected != null || label != null ? _annotate : null;
 
   void _annotate(SemanticsNode node) {
     if (checked != null) {
@@ -2929,6 +2949,8 @@ class RenderSemanticsAnnotations extends RenderProxyBox {
         ..hasCheckedState = true
         ..isChecked = checked;
     }
+    if (selected != null)
+      node.isSelected = selected;
     if (label != null)
       node.label = label;
   }

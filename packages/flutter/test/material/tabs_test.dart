@@ -2,12 +2,15 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:ui' show SemanticsFlags, SemanticsAction;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
 import '../rendering/mock_canvas.dart';
 import '../rendering/recording_canvas.dart';
+import '../widgets/semantics_tester.dart';
 
 class StateMarker extends StatefulWidget {
   const StateMarker({ Key key, this.child }) : super(key: key);
@@ -900,4 +903,155 @@ void main() {
       rect: new Rect.fromLTRB(tabLeft + padLeft, height, tabRight - padRight, height + weight)
     ));
   });
+  
+  testWidgets('correct semantics', (WidgetTester tester) async {
+    final SemanticsTester semantics = new SemanticsTester(tester);
+
+    final List<Tab> tabs = new List<Tab>.generate(2, (int index) {
+      return new Tab(text: 'TAB #$index');
+    });
+
+    final TabController controller = new TabController(
+      vsync: const TestVSync(),
+      length: tabs.length,
+      initialIndex: 0,
+    );
+
+    await tester.pumpWidget(
+      new Material(
+        child: new Semantics(
+          container: true,
+          child: new TabBar(
+            isScrollable: true,
+            controller: controller,
+            tabs: tabs,
+          ),
+        ),
+      ),
+    );
+
+    final TestSemantics expectedSemantics = new TestSemantics.root(
+      children: <TestSemantics>[
+        new TestSemantics.rootChild(
+          id: 1,
+          rect: TestSemantics.fullScreen,
+          children: <TestSemantics>[
+            new TestSemantics(
+              id: 2,
+              actions: SemanticsAction.tap.index,
+              flags: SemanticsFlags.isSelected.index,
+              label: 'TAB #0',
+              rect: new Rect.fromLTRB(0.0, 0.0, 108.0, 46.0),
+              transform: new Matrix4.translationValues(0.0, 276.0, 0.0),
+            ),
+            new TestSemantics(
+              id: 4,
+              actions: SemanticsAction.tap.index,
+              label: 'TAB #1',
+              rect: new Rect.fromLTRB(0.0, 0.0, 108.0, 46.0),
+              transform: new Matrix4.translationValues(108.0, 276.0, 0.0),
+            ),
+          ]),
+      ],
+    );
+
+    expect(semantics, hasSemantics(expectedSemantics));
+
+    semantics.dispose();
+  });
+
+  testWidgets('TabBar etc with zero tabs', (WidgetTester tester) async {
+    final TabController controller = new TabController(
+      vsync: const TestVSync(),
+      length: 0,
+    );
+
+    await tester.pumpWidget(
+      new Material(
+        child: new Column(
+          children: <Widget>[
+            new TabBar(
+              controller: controller,
+              tabs: const <Widget>[],
+            ),
+            new Flexible(
+              child: new TabBarView(
+                controller: controller,
+                children: const <Widget>[],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    expect(controller.index, 0);
+    expect(tester.getSize(find.byType(TabBar)), const Size(800.0, 48.0));
+    expect(tester.getSize(find.byType(TabBarView)), const Size(800.0, 600.0 - 48.0));
+
+    // A fling in the TabBar or TabBarView, shouldn't do anything.
+
+    await(tester.fling(find.byType(TabBar), const Offset(-100.0, 0.0), 5000.0));
+    await(tester.pumpAndSettle());
+
+    await(tester.fling(find.byType(TabBarView), const Offset(100.0, 0.0), 5000.0));
+    await(tester.pumpAndSettle());
+
+    expect(controller.index, 0);
+  });
+
+  testWidgets('TabBar etc with one tab', (WidgetTester tester) async {
+    final TabController controller = new TabController(
+      vsync: const TestVSync(),
+      length: 1,
+    );
+
+    await tester.pumpWidget(
+      new Material(
+        child: new Column(
+          children: <Widget>[
+            new TabBar(
+              controller: controller,
+              tabs: const <Widget>[const Tab(text: 'TAB')],
+            ),
+            new Flexible(
+              child: new TabBarView(
+                controller: controller,
+                children: const <Widget>[const Text('PAGE')],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    expect(controller.index, 0);
+    expect(find.text('TAB'), findsOneWidget);
+    expect(find.text('PAGE'), findsOneWidget);
+    expect(tester.getSize(find.byType(TabBar)), const Size(800.0, 48.0));
+    expect(tester.getSize(find.byType(TabBarView)), const Size(800.0, 600.0 - 48.0));
+
+    // The one tab spans the app's width
+    expect(tester.getTopLeft(find.widgetWithText(Tab, 'TAB')).dx, 0);
+    expect(tester.getTopRight(find.widgetWithText(Tab, 'TAB')).dx, 800);
+
+    // A fling in the TabBar or TabBarView, shouldn't move the tab.
+
+    await(tester.fling(find.byType(TabBar), const Offset(-100.0, 0.0), 5000.0));
+    await(tester.pump(const Duration(milliseconds: 50)));
+    expect(tester.getTopLeft(find.widgetWithText(Tab, 'TAB')).dx, 0);
+    expect(tester.getTopRight(find.widgetWithText(Tab, 'TAB')).dx, 800);
+    await(tester.pumpAndSettle());
+
+    await(tester.fling(find.byType(TabBarView), const Offset(100.0, 0.0), 5000.0));
+    await(tester.pump(const Duration(milliseconds: 50)));
+    expect(tester.getTopLeft(find.widgetWithText(Tab, 'TAB')).dx, 0);
+    expect(tester.getTopRight(find.widgetWithText(Tab, 'TAB')).dx, 800);
+    await(tester.pumpAndSettle());
+
+    expect(controller.index, 0);
+    expect(find.text('TAB'), findsOneWidget);
+    expect(find.text('PAGE'), findsOneWidget);
+  });
+
 }

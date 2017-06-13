@@ -330,7 +330,7 @@ class CustomPaint extends SingleChildRenderObjectWidget {
 /// custom [clipper].
 ///
 /// [ClipRect] is commonly used with these widgets, which commonly paint outside
-/// their bounds.
+/// their bounds:
 ///
 ///  * [CustomPaint]
 ///  * [CustomSingleChildLayout]
@@ -342,15 +342,15 @@ class CustomPaint extends SingleChildRenderObjectWidget {
 ///
 /// ## Sample code
 ///
-/// For example, use a clip to show the top half of an [Image], you can use a
-/// [ClipRect] combined with an [Align]:
+/// For example, by combining a [ClipRect] with an [Align], one can show just
+/// the top half of an [Image]:
 ///
 /// ```dart
 /// new ClipRect(
 ///   child: new Align(
 ///     alignment: FractionalOffset.topCenter,
 ///     heightFactor: 0.5,
-///     child: new Image(...),
+///     child: new Image.network(userAvatarUrl),
 ///   ),
 /// )
 /// ```
@@ -1693,7 +1693,10 @@ class AspectRatio extends SingleChildRenderObjectWidget {
 /// you would like a child that would otherwise attempt to expand infinitely to
 /// instead size itself to a more reasonable width.
 ///
-/// This class is relatively expensive. Avoid using it where possible.
+/// This class is relatively expensive, because it adds a speculative layout
+/// pass before the final layout phase. Avoid using it where possible. In the
+/// worst case, this widget can result in a layout that is O(N²) in the depth of
+/// the tree.
 class IntrinsicWidth extends SingleChildRenderObjectWidget {
   /// Creates a widget that sizes its child to the child's intrinsic width.
   ///
@@ -1724,7 +1727,10 @@ class IntrinsicWidth extends SingleChildRenderObjectWidget {
 /// you would like a child that would otherwise attempt to expand infinitely to
 /// instead size itself to a more reasonable height.
 ///
-/// This class is relatively expensive. Avoid using it where possible.
+/// This class is relatively expensive, because it adds a speculative layout
+/// pass before the final layout phase. Avoid using it where possible. In the
+/// worst case, this widget can result in a layout that is O(N²) in the depth of
+/// the tree.
 class IntrinsicHeight extends SingleChildRenderObjectWidget {
   /// Creates a widget that sizes its child to the child's intrinsic height.
   ///
@@ -1914,12 +1920,13 @@ class ListBody extends MultiChildRenderObjectWidget {
 /// placed relative to the stack according to their top, right, bottom, and left
 /// properties.
 ///
-/// The stack paints its children in order. If you want to change the order in
-/// which the children paint, you can rebuild the stack with the children in
-/// the new order. If you reorder the children in this way, consider giving the
-/// children non-null keys. These keys will cause the framework to move the
-/// underlying objects for the children to their new locations rather than
-/// recreate them at their new location.
+/// The stack paints its children in order with the first child being at the
+/// bottom. If you want to change the order in which the children paint, you
+/// can rebuild the stack with the children in the new order. If you reorder
+/// the children in this way, consider giving the children non-null keys.
+/// These keys will cause the framework to move the underlying objects for
+/// the children to their new locations rather than recreate them at their
+/// new location.
 ///
 /// For more details about the stack layout algorithm, see [RenderStack].
 ///
@@ -2235,6 +2242,7 @@ class Positioned extends ParentDataWidget<Stack> {
 /// ## Layout algorithm
 ///
 /// _This section describes how a [Flex] is rendered by the framework._
+/// _See [BoxConstraints] for an introduction to box layout models._
 ///
 /// Layout for a [Flex] proceeds in six steps:
 ///
@@ -2458,6 +2466,7 @@ class Flex extends MultiChildRenderObjectWidget {
 /// ## Layout algorithm
 ///
 /// _This section describes how a [Row] is rendered by the framework._
+/// _See [BoxConstraints] for an introduction to box layout models._
 ///
 /// Layout for a [Row] proceeds in six steps:
 ///
@@ -2582,6 +2591,7 @@ class Row extends Flex {
 /// ## Layout algorithm
 ///
 /// _This section describes how a [Column] is rendered by the framework._
+/// _See [BoxConstraints] for an introduction to box layout models._
 ///
 /// Layout for a [Column] proceeds in six steps:
 ///
@@ -2999,13 +3009,14 @@ class Flow extends MultiChildRenderObjectWidget {
 ///
 /// Text displayed in a [RichText] widget must be explicitly styled. When
 /// picking which style to use, consider using [DefaultTextStyle.of] the current
-/// [BuildContext] to provide defaults.
+/// [BuildContext] to provide defaults. For more details on how to style text in
+/// a [RichText] widget, see the documentation for [TextStyle].
 ///
 /// When all the text uses the same style, consider using the [Text] widget,
 /// which is less verbose and integrates with [DefaultTextStyle] for default
 /// styling.
 ///
-/// Example:
+/// ## Sample code
 ///
 /// ```dart
 /// new RichText(
@@ -3022,13 +3033,18 @@ class Flow extends MultiChildRenderObjectWidget {
 ///
 /// See also:
 ///
-///  * [Text]
-///  * [TextSpan]
-///  * [DefaultTextStyle]
+///  * [TextStyle], which discusses how to style text.
+///  * [TextSpan], which is used to describe the text in a paragraph.
+///  * [Text], which automatically applies the ambient styles described by a
+///    [DefaultTextStyle] to a single string.
 class RichText extends LeafRenderObjectWidget {
   /// Creates a paragraph of rich text.
   ///
-  /// The [text], [softWrap], and [overflow] arguments must not be null.
+  /// The [text], [softWrap], [overflow], nad [textScaleFactor] arguments must
+  /// not be null.
+  ///
+  /// The [maxLines] property may be null (and indeed defaults to null), but if
+  /// it is not null, it must be greater than zero.
   const RichText({
     Key key,
     @required this.text,
@@ -3041,6 +3057,7 @@ class RichText extends LeafRenderObjectWidget {
        assert(softWrap != null),
        assert(overflow != null),
        assert(textScaleFactor != null),
+       assert(maxLines == null || maxLines > 0),
        super(key: key);
 
   /// The text to display in this widget.
@@ -3066,6 +3083,9 @@ class RichText extends LeafRenderObjectWidget {
   /// An optional maximum number of lines for the text to span, wrapping if necessary.
   /// If the text exceeds the given number of lines, it will be truncated according
   /// to [overflow].
+  ///
+  /// If this is 1, text will not wrap. Otherwise, text will be wrapped at the
+  /// edge of the box.
   final int maxLines;
 
   @override
@@ -3313,6 +3333,10 @@ class WidgetToRenderBoxAdapter extends LeafRenderObjectWidget {
 ///
 /// Rather than listening for raw pointer events, consider listening for
 /// higher-level gestures using [GestureDetector].
+///
+/// ## Layout behavior
+///
+/// _See [BoxConstraints] for an introduction to box layout models._
 ///
 /// If it has a child, this widget defers to the child for sizing behavior. If
 /// it does not have a child, it grows to fit the parent instead.
@@ -3611,7 +3635,8 @@ class Semantics extends SingleChildRenderObjectWidget {
     Widget child,
     this.container: false,
     this.checked,
-    this.label
+    this.selected,
+    this.label,
   }) : assert(container != null),
        super(key: key, child: child);
 
@@ -3632,6 +3657,13 @@ class Semantics extends SingleChildRenderObjectWidget {
   /// state is.
   final bool checked;
 
+  /// If non-null indicates that this subtree represents something that can be
+  /// in a selected or unselected state, and what its current state is.
+  ///
+  /// The active tab in a tab bar for example is considered "selected", whereas
+  /// all other tabs are unselected.
+  final bool selected;
+
   /// Provides a textual description of the widget.
   final String label;
 
@@ -3639,7 +3671,8 @@ class Semantics extends SingleChildRenderObjectWidget {
   RenderSemanticsAnnotations createRenderObject(BuildContext context) => new RenderSemanticsAnnotations(
     container: container,
     checked: checked,
-    label: label
+    selected: selected,
+    label: label,
   );
 
   @override
@@ -3647,6 +3680,7 @@ class Semantics extends SingleChildRenderObjectWidget {
     renderObject
       ..container = container
       ..checked = checked
+      ..selected = selected
       ..label = label;
   }
 
@@ -3656,6 +3690,8 @@ class Semantics extends SingleChildRenderObjectWidget {
     description.add('container: $container');
     if (checked != null)
       description.add('checked: $checked');
+    if (selected != null)
+      description.add('selected: $selected');
     if (label != null)
       description.add('label: "$label"');
   }
