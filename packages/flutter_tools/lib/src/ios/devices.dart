@@ -14,9 +14,9 @@ import '../base/process.dart';
 import '../base/process_manager.dart';
 import '../build_info.dart';
 import '../device.dart';
-import '../doctor.dart';
 import '../globals.dart';
 import '../protocol_discovery.dart';
+import 'ios_workflow.dart';
 import 'mac.dart';
 
 const String _kIdeviceinstallerInstructions =
@@ -33,7 +33,7 @@ class IOSDevices extends PollingDeviceDiscovery {
   bool get supportsPlatform => platform.isMacOS;
 
   @override
-  bool get canListAnything => doctor.iosWorkflow.canListDevices;
+  bool get canListAnything => iosWorkflow.canListDevices;
 
   @override
   List<Device> pollingGetDevices() => IOSDevice.getAttachedDevices();
@@ -42,12 +42,7 @@ class IOSDevices extends PollingDeviceDiscovery {
 class IOSDevice extends Device {
   IOSDevice(String id, { this.name }) : super(id) {
     _installerPath = _checkForCommand('ideviceinstaller');
-    _listerPath = _checkForCommand('idevice_id');
-    _informerPath = _checkForCommand('ideviceinfo');
     _iproxyPath = _checkForCommand('iproxy');
-    _debuggerPath = _checkForCommand('idevicedebug');
-    _loggerPath = _checkForCommand('idevicesyslog');
-    _screenshotPath = _checkForCommand('idevicescreenshot');
     _pusherPath = _checkForCommand(
       'ios-deploy',
       'To copy files to iOS devices, please install ios-deploy. To install, run:\n'
@@ -57,28 +52,8 @@ class IOSDevice extends Device {
   }
 
   String _installerPath;
-  String get installerPath => _installerPath;
-
-  String _listerPath;
-  String get listerPath => _listerPath;
-
-  String _informerPath;
-  String get informerPath => _informerPath;
-
   String _iproxyPath;
-  String get iproxyPath => _iproxyPath;
-
-  String _debuggerPath;
-  String get debuggerPath => _debuggerPath;
-
-  String _loggerPath;
-  String get loggerPath => _loggerPath;
-
-  String _screenshotPath;
-  String get screenshotPath => _screenshotPath;
-
   String _pusherPath;
-  String get pusherPath => _pusherPath;
 
   @override
   bool get supportsHotMode => true;
@@ -97,30 +72,15 @@ class IOSDevice extends Device {
   bool get supportsStartPaused => false;
 
   static List<IOSDevice> getAttachedDevices() {
-    if (!doctor.iosWorkflow.hasIDeviceId)
+    if (!iMobileDevice.isInstalled)
       return <IOSDevice>[];
 
     final List<IOSDevice> devices = <IOSDevice>[];
-    for (String id in _getAttachedDeviceIDs()) {
-      final String name = IOSDevice._getDeviceInfo(id, 'DeviceName');
+    for (String id in iMobileDevice.getAttachedDeviceIDs()) {
+      final String name = iMobileDevice.getInfoForDevice(id, 'DeviceName');
       devices.add(new IOSDevice(id, name: name));
     }
     return devices;
-  }
-
-  static Iterable<String> _getAttachedDeviceIDs() {
-    final String listerPath = _checkForCommand('idevice_id');
-    try {
-      final String output = runSync(<String>[listerPath, '-l']);
-      return output.trim().split('\n').where((String s) => s != null && s.isNotEmpty);
-    } catch (e) {
-      return <String>[];
-    }
-  }
-
-  static String _getDeviceInfo(String deviceID, String infoKey) {
-    final String informerPath = _checkForCommand('ideviceinfo');
-    return runSync(<String>[informerPath, '-k', infoKey, '-u', deviceID]).trim();
   }
 
   static String _checkForCommand(
@@ -143,7 +103,7 @@ class IOSDevice extends Device {
   @override
   Future<bool> isAppInstalled(ApplicationPackage app) async {
     try {
-      final RunResult apps = await runCheckedAsync(<String>[installerPath, '--list-apps']);
+      final RunResult apps = await runCheckedAsync(<String>[_installerPath, '--list-apps']);
       if (new RegExp(app.id, multiLine: true).hasMatch(apps.stdout)) {
         return true;
       }
@@ -166,7 +126,7 @@ class IOSDevice extends Device {
     }
 
     try {
-      await runCheckedAsync(<String>[installerPath, '-i', iosApp.deviceBundlePath]);
+      await runCheckedAsync(<String>[_installerPath, '-i', iosApp.deviceBundlePath]);
       return true;
     } catch (e) {
       return false;
@@ -176,7 +136,7 @@ class IOSDevice extends Device {
   @override
   Future<bool> uninstallApp(ApplicationPackage app) async {
     try {
-      await runCheckedAsync(<String>[installerPath, '-U', app.id]);
+      await runCheckedAsync(<String>[_installerPath, '-U', app.id]);
       return true;
     } catch (e) {
       return false;
@@ -331,7 +291,7 @@ class IOSDevice extends Device {
   Future<bool> pushFile(ApplicationPackage app, String localFile, String targetFile) async {
     if (platform.isMacOS) {
       runSync(<String>[
-        pusherPath,
+        _pusherPath,
         '-t',
         '1',
         '--bundle_id',
@@ -353,9 +313,9 @@ class IOSDevice extends Device {
   @override
   Future<String> get sdkNameAndVersion async => 'iOS $_sdkVersion ($_buildVersion)';
 
-  String get _sdkVersion => _getDeviceInfo(id, 'ProductVersion');
+  String get _sdkVersion => iMobileDevice.getInfoForDevice(id, 'ProductVersion');
 
-  String get _buildVersion => _getDeviceInfo(id, 'BuildVersion');
+  String get _buildVersion => iMobileDevice.getInfoForDevice(id, 'BuildVersion');
 
   @override
   DeviceLogReader getLogReader({ApplicationPackage app}) {
@@ -371,12 +331,10 @@ class IOSDevice extends Device {
   }
 
   @override
-  bool get supportsScreenshot => screenshotPath != null && screenshotPath.isNotEmpty;
+  bool get supportsScreenshot => iMobileDevice.isInstalled;
 
   @override
-  Future<Null> takeScreenshot(File outputFile) {
-    return runCheckedAsync(<String>[screenshotPath, outputFile.path]);
-  }
+  Future<Null> takeScreenshot(File outputFile) => iMobileDevice.takeScreenshot(outputFile);
 }
 
 class _IOSDeviceLogReader extends DeviceLogReader {
@@ -408,7 +366,7 @@ class _IOSDeviceLogReader extends DeviceLogReader {
   String get name => device.name;
 
   void _start() {
-    runCommand(<String>[device.loggerPath]).then<Null>((Process process) {
+    iMobileDevice.startLogger().then<Null>((Process process) {
       _process = process;
       _process.stdout.transform(UTF8.decoder).transform(const LineSplitter()).listen(_onLine);
       _process.stderr.transform(UTF8.decoder).transform(const LineSplitter()).listen(_onLine);
@@ -452,7 +410,7 @@ class _IOSDevicePortForwarder extends DevicePortForwarder {
 
     // Usage: iproxy LOCAL_TCP_PORT DEVICE_TCP_PORT UDID
     final Process process = await runCommand(<String>[
-      device.iproxyPath,
+      device._iproxyPath,
       hostPort.toString(),
       devicePort.toString(),
       device.id,
