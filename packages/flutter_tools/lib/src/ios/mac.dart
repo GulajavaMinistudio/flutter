@@ -70,21 +70,6 @@ class IMobileDevice {
     return await exitsHappyAsync(<String>['idevicename']);
   }
 
-  List<String> getAttachedDeviceIDs() {
-    return runSync(<String>['idevice_id', '-l'])
-        .trim()
-        .split('\n')
-        .where((String line) => line.isNotEmpty)
-        .toList();
-  }
-
-  /// Returns the value associated with the specified `ideviceinfo` key for a device.
-  ///
-  /// If either the specified key or device does not exist, returns the empty string.
-  String getInfoForDevice(String deviceID, String key) {
-    return runSync(<String>['ideviceinfo', '-k', key, '-u', deviceID]).trim();
-  }
-
   /// Starts `idevicesyslog` and returns the running process.
   Future<Process> startLogger() => runCommand(<String>['idevicesyslog']);
 
@@ -164,6 +149,13 @@ class Xcode {
     _xcodeMinorVersion = components.length == 1 ? 0 : int.parse(components[1]);
 
     return _xcodeVersionCheckValid(_xcodeMajorVersion, _xcodeMinorVersion);
+  }
+
+  Future<String> getAvailableDevices() async {
+    final RunResult result = await runAsync(<String>['/usr/bin/instruments', '-s', 'devices']);
+    if (result.exitCode != 0)
+      throw new ToolExit('Failed to invoke /usr/bin/instruments. Is Xcode installed?');
+    return result.stdout;
   }
 }
 
