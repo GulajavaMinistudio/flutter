@@ -193,7 +193,8 @@ Future<XcodeBuildResult> buildXcodeProject({
   BuildMode mode,
   String target: flx.defaultMainPath,
   bool buildForDevice,
-  bool codesign: true
+  bool codesign: true,
+  bool usesTerminalUi: true,
 }) async {
   if (!_checkXcodeVersion())
     return new XcodeBuildResult(success: false);
@@ -205,7 +206,7 @@ Future<XcodeBuildResult> buildXcodeProject({
 
   String developmentTeam;
   if (codesign && buildForDevice)
-    developmentTeam = await getCodeSigningIdentityDevelopmentTeam(app);
+    developmentTeam = await getCodeSigningIdentityDevelopmentTeam(iosApp: app, usesTerminalUi: usesTerminalUi);
 
   // Before the build, all service definitions must be updated and the dylibs
   // copied over to a location that is suitable for Xcodebuild to find them.
@@ -434,16 +435,15 @@ Future<Null> _runPodInstall(Directory bundle, String engineDirectory) async {
       );
       return;
     }
-    try {
-      final Status status = logger.startProgress('Running pod install...', expectSlowOperation: true);
-      await runCheckedAsync(
-          <String>['pod', 'install'],
-          workingDirectory: bundle.path,
-          environment: <String, String>{'FLUTTER_FRAMEWORK_DIR': engineDirectory},
-      );
-      status.stop();
-    } catch (e) {
-      throwToolExit('Error running pod install: $e');
+    final Status status = logger.startProgress('Running pod install...', expectSlowOperation: true);
+    final ProcessResult result = await processManager.run(
+        <String>['pod', 'install'],
+        workingDirectory: bundle.path,
+        environment: <String, String>{'FLUTTER_FRAMEWORK_DIR': engineDirectory},
+    );
+    status.stop();
+    if (result.exitCode != 0) {
+      throwToolExit('Error running pod install:\n${result.stdout}');
     }
   }
 }
