@@ -164,8 +164,7 @@ class IOSDevice extends Device {
 
   @override
   Future<LaunchResult> startApp(
-    ApplicationPackage app,
-    BuildMode mode, {
+    ApplicationPackage app, {
     String mainPath,
     String route,
     DebuggingOptions debuggingOptions,
@@ -182,7 +181,7 @@ class IOSDevice extends Device {
       // Step 1: Build the precompiled/DBC application if necessary.
       final XcodeBuildResult buildResult = await buildXcodeProject(
           app: app,
-          mode: mode,
+          buildInfo: debuggingOptions.buildInfo,
           target: mainPath,
           buildForDevice: true,
           usesTerminalUi: usesTerminalUi,
@@ -267,7 +266,7 @@ class IOSDevice extends Device {
 
       final Future<Uri> forwardObservatoryUri = observatoryDiscovery.uri;
       Future<Uri> forwardDiagnosticUri;
-      if (debuggingOptions.buildMode == BuildMode.debug) {
+      if (debuggingOptions.buildInfo.isDebug) {
         forwardDiagnosticUri = diagnosticDiscovery.uri;
       } else {
         forwardDiagnosticUri = new Future<Uri>.value(null);
@@ -397,11 +396,19 @@ class _IOSDeviceLogReader extends DeviceLogReader {
   }
 
   void _onLine(String line) {
+    // Lines starting with these strings are suppressed from output as noise.
+    const List<String> blacklist = const <String>[
+      'libMobileGestalt ',
+    ];
+
     final Match match = _lineRegex.firstMatch(line);
 
     if (match != null) {
-      // Only display the log line after the initial device and executable information.
-      _linesController.add(line.substring(match.end));
+      final String logLine = line.substring(match.end);
+      if (!blacklist.any(logLine.startsWith)) {
+        // Only display the log line after the initial device and executable information.
+        _linesController.add(logLine);
+      }
     }
   }
 
