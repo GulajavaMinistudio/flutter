@@ -13,7 +13,7 @@ import 'i18n/localizations.dart';
 ///
 /// See also:
 ///
-///  * [DefaultMaterialLocalizations], which implements this interface and
+///  * [DefaultMaterialLocalizations], which implements this interface
 ///    and supports a variety of locales.
 abstract class MaterialLocalizations {
   /// The tooltip for the leading [AppBar] menu (aka 'hamburger') button
@@ -52,6 +52,9 @@ abstract class MaterialLocalizations {
 class DefaultMaterialLocalizations implements MaterialLocalizations {
   /// Construct an object that defines the material widgets' localized strings
   /// for the given `locale`.
+  ///
+  /// [LocalizationsDelegate] implementations typically call the static [load]
+  /// function, rather than constructing this class directly.
   DefaultMaterialLocalizations(this.locale) {
     assert(locale != null);
     _nameToValue = localizations[locale.toString()]

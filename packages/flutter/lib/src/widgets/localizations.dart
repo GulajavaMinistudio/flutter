@@ -78,9 +78,10 @@ Future<Map<Type, dynamic>> _loadAll(Locale locale, Iterable<LocalizationsDelegat
 /// A factory for a set of localized resources of type `T`, to be loaded by a
 /// [Localizations] widget.
 ///
-/// Typical applications have one [Localizations] widget which is
-/// created by the [WidgetsApp] and configured with the app's
-/// `localizationsDelegates` parameter.
+/// Typical applications have one [Localizations] widget which is created by the
+/// [WidgetsApp] and configured with the app's `localizationsDelegates`
+/// parameter (a list of delegates). The delegate's [type] is used to identify
+/// the object created by an individual delegate's [load] method.
 abstract class LocalizationsDelegate<T> {
   /// Abstract const constructor. This constructor enables subclasses to provide
   /// const constructors so that they can be used in const expressions.
@@ -102,6 +103,17 @@ abstract class LocalizationsDelegate<T> {
   /// after [load] has completed.
   bool shouldReload(covariant LocalizationsDelegate<T> old);
 
+  /// The type of the object returned by the [load] method, T by default.
+  ///
+  /// This type is used to retrieve the object "loaded" by this
+  /// [LocalizationsDelegate] from the [Localizations] inherited widget.
+  /// For example the object loaded by `LocalizationsDelegate<Foo>` would
+  /// be retrieved with:
+  /// ```dart
+  /// Foo foo = Localizations.of<Foo>(context, Foo);
+  /// ```
+  ///
+  /// It's rarely necessary to override this getter.
   Type get type => T;
 
   @override
@@ -114,20 +126,13 @@ abstract class LocalizationsDelegate<T> {
 /// In particular, this maps locales to a specific [Directionality] using the
 /// [textDirection] property.
 ///
-/// This class provides a default placeholder implementation that returns
-/// hard-coded American English values.
-class WidgetsLocalizations {
-  /// Create a placeholder object for the localized resources of the lowest
-  /// levels of the Flutter framework which only provides values for American
-  /// English.
-  const WidgetsLocalizations();
-
-  /// The locale for which the values of this class's localized resources
-  /// have been translated.
-  Locale get locale => const Locale('en', 'US');
-
+/// See also:
+///
+///  * [DefaultWidgetsLocalizations], which implements this interface and
+///    supports a variety of locales.
+abstract class WidgetsLocalizations {
   /// The reading direction for text in this locale.
-  TextDirection get textDirection => TextDirection.ltr;
+  TextDirection get textDirection;
 
   /// The `WidgetsLocalizations` from the closest [Localizations] instance
   /// that encloses the given context.
@@ -143,6 +148,46 @@ class WidgetsLocalizations {
   /// ```
   static WidgetsLocalizations of(BuildContext context) {
     return Localizations.of<WidgetsLocalizations>(context, WidgetsLocalizations);
+  }
+}
+
+/// Localized values for widgets.
+class DefaultWidgetsLocalizations implements WidgetsLocalizations {
+  /// Construct an object that defines the localized values for the widgets
+  /// library for the given `locale`.
+  ///
+  /// [LocalizationsDelegate] implementations typically call the static [load]
+  /// function, rather than constructing this class directly.
+  DefaultWidgetsLocalizations(this.locale) {
+    final String language = locale.languageCode.toLowerCase();
+    _textDirection = _rtlLanguages.contains(language) ? TextDirection.rtl : TextDirection.ltr;
+  }
+
+  // See http://en.wikipedia.org/wiki/Right-to-left
+  static const List<String> _rtlLanguages = const <String>[
+    'ar',  // Arabic
+    'fa',  // Farsi
+    'he',  // Hebrew
+    'ps',  // Pashto
+    'sd',  // Sindhi
+    'ur',  // Urdu
+  ];
+
+  /// The locale for which the values of this class's localized resources
+  /// have been translated.
+  final Locale locale;
+
+  @override
+  TextDirection get textDirection => _textDirection;
+  TextDirection _textDirection;
+
+  /// Creates an object that provides localized resource values for the
+  /// lowest levels of the Flutter framework.
+  ///
+  /// This method is typically used to create a [LocalizationsDelegate].
+  /// The [WidgetsApp] does so by default.
+  static Future<WidgetsLocalizations> load(Locale locale) {
+    return new SynchronousFuture<WidgetsLocalizations>(new DefaultWidgetsLocalizations(locale));
   }
 }
 
@@ -260,9 +305,9 @@ class Localizations extends StatefulWidget {
     @required this.locale,
     @required this.delegates,
     this.child,
-  }) : assert(locale != null),
-       assert(delegates != null),
-       super(key: key) {
+  }) : super(key: key) {
+    assert(locale != null);
+    assert(delegates != null);
     assert(delegates.any((LocalizationsDelegate<dynamic> delegate) => delegate is LocalizationsDelegate<WidgetsLocalizations>));
   }
 
