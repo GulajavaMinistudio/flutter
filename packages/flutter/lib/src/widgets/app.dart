@@ -70,7 +70,7 @@ class WidgetsApp extends StatefulWidget {
     Key key,
     @required this.onGenerateRoute,
     this.onUnknownRoute,
-    this.title,
+    this.title: '',
     this.textStyle,
     @required this.color,
     this.navigatorObservers: const <NavigatorObserver>[],
@@ -86,7 +86,8 @@ class WidgetsApp extends StatefulWidget {
     this.debugShowWidgetInspector: false,
     this.debugShowCheckedModeBanner: true,
     this.inspectorSelectButtonBuilder,
-  }) : assert(onGenerateRoute != null),
+  }) : assert(title != null),
+       assert(onGenerateRoute != null),
        assert(color != null),
        assert(navigatorObservers != null),
        assert(supportedLocales != null && supportedLocales.isNotEmpty),
@@ -298,6 +299,21 @@ class _WidgetsAppState extends State<WidgetsApp> implements WidgetsBindingObserv
   Locale _locale;
 
   Locale _resolveLocale(Locale newLocale, Iterable<Locale> supportedLocales) {
+    // Android devices (Java really) report 3 deprecated language codes, see
+    // http://bugs.java.com/bugdatabase/view_bug.do?bug_id=4140555
+    // and https://developer.android.com/reference/java/util/Locale.html
+    switch(newLocale.languageCode) {
+      case 'iw':
+        newLocale = new Locale('he', newLocale.countryCode); // Hebrew
+        break;
+      case 'ji':
+        newLocale = new Locale('yi', newLocale.countryCode); // Yiddish
+        break;
+      case 'in':
+        newLocale = new Locale('id', newLocale.countryCode); // Indonesian
+        break;
+    }
+
     if (widget.localeResolutionCallback != null) {
       final Locale locale = widget.localeResolutionCallback(newLocale, widget.supportedLocales);
       if (locale != null)
