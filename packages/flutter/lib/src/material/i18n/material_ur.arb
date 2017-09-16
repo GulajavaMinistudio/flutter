@@ -1,4 +1,5 @@
 {
+  "timeOfDayFormat": "h:mm a",
   "openAppDrawerTooltip": "کھولیں نیویگیشن مینو",
   "backButtonTooltip": "واپس",
   "closeButtonTooltip": "بند کریں",
@@ -7,6 +8,7 @@
   "nextPageTooltip": "اگلا صفحہ",
   "previousPageTooltip": "سابقہ ​​صفحہ",
   "showMenuTooltip": "مینو دکھائیں",
+  "aboutListTileTitle": "کے بارے میں $applicationName",
   "licensesPageTitle": "لائسنس",
   "pageRowsInfoTitle": "$firstRow–$lastRow کے $rowCount",
   "pageRowsInfoTitleApproximate": "$firstRow–$lastRow میں سے $rowCount تقریبا",
@@ -20,5 +22,7 @@
   "okButtonLabel": "ٹھیک ہے",
   "pasteButtonLabel": "چسپاں",
   "selectAllButtonLabel": "تکاپیمام منتخب کریں",
-  "viewLicensesButtonLabel": "لائسنس دیکھیں"
+  "viewLicensesButtonLabel": "لائسنس دیکھیں",
+  "anteMeridiemAbbreviation": "AM",
+  "postMeridiemAbbreviation": "PM"
 }

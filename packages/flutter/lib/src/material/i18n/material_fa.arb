@@ -1,4 +1,5 @@
 {
+  "timeOfDayFormat": "H:mm",
   "openAppDrawerTooltip": "منوی ناوبری را باز کنید",
   "backButtonTooltip": "بازگشت",
   "closeButtonTooltip": "بستن",
@@ -7,6 +8,7 @@
   "nextPageTooltip": "صفحه بعد",
   "previousPageTooltip": "صفحه قبلی",
   "showMenuTooltip": "نمایش منو",
+  "aboutListTileTitle": "درباره $applicationName",
   "licensesPageTitle": "مجوز",
   "pageRowsInfoTitle": "$firstRow–$lastRow از $rowCount",
   "pageRowsInfoTitleApproximate": "$firstRow–$lastRow از حدود $rowCount",

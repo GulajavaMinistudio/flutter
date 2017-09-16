@@ -1,4 +1,10 @@
 {
+  "timeOfDayFormat": "h:mm a",
+  "@timeOfDayFormat": {
+    "description": "The ICU 'Short Time' pattern, such as 'HH:mm', 'h:mm a', 'H:mm'. See: http://demo.icu-project.org/icu-bin/locexp?d_=en&_=en_US",
+    "type": "text"
+  },
+
   "openAppDrawerTooltip": "Open navigation menu",
   "@openAppDrawerTooltip": {
     "description": "The tooltip for the leading AppBar menu (aka 'hamburger') button",
@@ -44,6 +50,12 @@
   "showMenuTooltip": "Show menu",
   "@showMenuTooltip": {
     "description": "The default PopupMenuButton tooltip",
+    "type": "text"
+  },
+
+  "aboutListTileTitle": "About $applicationName",
+  "@aboutListTileTitle": {
+    "description": "The default title for AboutListTile",
     "type": "text"
   },
 
@@ -125,6 +137,18 @@
   "viewLicensesButtonLabel": "VIEW LICENSES",
   "@viewLicensesButtonLabel": {
     "description": "The label for the about box's view licenses button.",
+    "type": "text"
+  },
+
+  "anteMeridiemAbbreviation": "AM",
+  "@anteMeridiemAbbreviation": {
+    "description": "The abbreviation for ante meridiem (before noon) shown in the time picker.",
+    "type": "text"
+  },
+
+  "postMeridiemAbbreviation": "PM",
+  "@postMeridiemAbbreviation": {
+    "description": "The abbreviation for post meridiem (after noon) shown in the time picker.",
     "type": "text"
   }
 }

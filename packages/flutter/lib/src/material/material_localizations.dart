@@ -6,11 +6,11 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' as intl;
 
 import 'i18n/localizations.dart';
 
-/// Defines the localized resource values used by the Material widgts.
+/// Defines the localized resource values used by the Material widgets.
 ///
 /// See also:
 ///
@@ -40,6 +40,9 @@ abstract class MaterialLocalizations {
 
   /// The default [PopupMenuButton] tooltip.
   String get showMenuTooltip;
+
+  /// The default title for [AboutListTile].
+  String aboutListTileTitle(String applicationName);
 
   /// Title for the [LicensePage] widget.
   String get licensesPageTitle;
@@ -80,6 +83,18 @@ abstract class MaterialLocalizations {
   /// Label for the [AboutBox] button that shows the [LicensePage].
   String get viewLicensesButtonLabel;
 
+  /// The abbreviation for ante meridiem (before noon) shown in the time picker.
+  String get anteMeridiemAbbreviation;
+
+  /// The abbreviation for post meridiem (after noon) shown in the time picker.
+  String get postMeridiemAbbreviation;
+
+  /// The format used to lay out the time picker.
+  ///
+  /// The documentation for [TimeOfDayFormat] enum values provides details on
+  /// each supported layout.
+  TimeOfDayFormat get timeOfDayFormat;
+
   /// The `MaterialLocalizations` from the closest [Localizations] instance
   /// that encloses the given context.
   ///
@@ -99,28 +114,29 @@ abstract class MaterialLocalizations {
 
 /// Localized strings for the material widgets.
 class DefaultMaterialLocalizations implements MaterialLocalizations {
-  /// Construct an object that defines the material widgets' localized strings
+  /// Constructs an object that defines the material widgets' localized strings
   /// for the given `locale`.
   ///
   /// [LocalizationsDelegate] implementations typically call the static [load]
   /// function, rather than constructing this class directly.
   DefaultMaterialLocalizations(this.locale) {
     assert(locale != null);
-    _nameToValue = localizations[_localeName]
-      ?? localizations[locale.languageCode]
-      ?? localizations['en']
-      ?? <String, String>{};
-  }
 
-  Map<String, String> _nameToValue;
+    if (localizations.containsKey(locale.languageCode))
+      _nameToValue.addAll(localizations[locale.languageCode]);
+    if (localizations.containsKey(_localeName))
+      _nameToValue.addAll(localizations[_localeName]);
+  }
 
   /// The locale for which the values of this class's localized resources
   /// have been translated.
   final Locale locale;
 
+  final Map<String, String> _nameToValue = <String, String>{};
+
   String get _localeName {
     final String localeName = locale.countryCode.isEmpty ? locale.languageCode : locale.toString();
-    return Intl.canonicalizedLocale(localeName);
+    return intl.Intl.canonicalizedLocale(localeName);
   }
 
   // TODO(hmuller): the rules for mapping from an integer value to
@@ -143,9 +159,9 @@ class DefaultMaterialLocalizations implements MaterialLocalizations {
 
   String _formatInteger(int n) {
     final String localeName = _localeName;
-    if (!NumberFormat.localeExists(localeName))
+    if (!intl.NumberFormat.localeExists(localeName))
       return n.toString();
-    return new NumberFormat.decimalPattern(localeName).format(n);
+    return new intl.NumberFormat.decimalPattern(localeName).format(n);
 
   }
 
@@ -172,6 +188,12 @@ class DefaultMaterialLocalizations implements MaterialLocalizations {
 
   @override
   String get showMenuTooltip => _nameToValue['showMenuTooltip'];
+
+  @override
+  String aboutListTileTitle(String applicationName) {
+    final String text = _nameToValue['aboutListTileTitle'];
+    return text.replaceFirst(r'$applicationName', applicationName);
+  }
 
   @override
   String get licensesPageTitle => _nameToValue['licensesPageTitle'];
@@ -224,6 +246,47 @@ class DefaultMaterialLocalizations implements MaterialLocalizations {
   @override
   String get viewLicensesButtonLabel => _nameToValue['viewLicensesButtonLabel'];
 
+  @override
+  String get anteMeridiemAbbreviation => _nameToValue['anteMeridiemAbbreviation'];
+
+  @override
+  String get postMeridiemAbbreviation => _nameToValue['postMeridiemAbbreviation'];
+
+  /// The [TimeOfDayFormat] corresponding to one of the following supported
+  /// patterns:
+  ///
+  ///  * `HH:mm`
+  ///  * `HH.mm`
+  ///  * `HH 'h' mm`
+  ///  * `HH:mm น.`
+  ///  * `H:mm`
+  ///  * `h:mm a`
+  ///  * `a h:mm`
+  ///  * `ah:mm`
+  ///
+  /// See also:
+  ///
+  ///  * http://demo.icu-project.org/icu-bin/locexp?d_=en&_=en_US shows the
+  ///    short time pattern used in locale en_US
+  @override
+  TimeOfDayFormat get timeOfDayFormat {
+    final String icuShortTimePattern = _nameToValue['timeOfDayFormat'];
+
+    assert(() {
+      if (!_icuTimeOfDayToEnum.containsKey(icuShortTimePattern)) {
+        throw new FlutterError(
+          '"$icuShortTimePattern" is not one of the ICU short time patterns '
+          'supported by the material library. Here is the list of supported '
+          'patterns:\n  ' +
+          _icuTimeOfDayToEnum.keys.join('\n  ')
+        );
+      }
+      return true;
+    });
+
+    return _icuTimeOfDayToEnum[icuShortTimePattern];
+  }
+
   /// Creates an object that provides localized resource values for the
   /// for the widgets of the material library.
   ///
@@ -232,4 +295,67 @@ class DefaultMaterialLocalizations implements MaterialLocalizations {
   static Future<MaterialLocalizations> load(Locale locale) {
     return new SynchronousFuture<MaterialLocalizations>(new DefaultMaterialLocalizations(locale));
   }
+}
+
+const Map<String, TimeOfDayFormat> _icuTimeOfDayToEnum = const <String, TimeOfDayFormat>{
+  'HH:mm': TimeOfDayFormat.HH_colon_mm,
+  'HH.mm': TimeOfDayFormat.HH_dot_mm,
+  "HH 'h' mm": TimeOfDayFormat.frenchCanadian,
+  'HH:mm น.': TimeOfDayFormat.HH_colon_mm,
+  'H:mm': TimeOfDayFormat.H_colon_mm,
+  'h:mm a': TimeOfDayFormat.h_colon_mm_space_a,
+  'a h:mm': TimeOfDayFormat.a_space_h_colon_mm,
+  'ah:mm': TimeOfDayFormat.a_space_h_colon_mm,
+};
+
+/// Determines how the time picker invoked using [showTimePicker] formats and
+/// lays out the time controls.
+///
+/// The time picker provides layout configurations optimized for each of the
+/// enum values.
+enum TimeOfDayFormat {
+  /// Corresponds to the ICU 'HH:mm' pattern.
+  ///
+  /// This format uses 24-hour two-digit zero-padded hours. Controls are always
+  /// laid out horizontally. Hours are separated from minutes by one colon
+  /// character.
+  HH_colon_mm,
+
+  /// Corresponds to the ICU 'HH.mm' pattern.
+  ///
+  /// This format uses 24-hour two-digit zero-padded hours. Controls are always
+  /// laid out horizontally. Hours are separated from minutes by one dot
+  /// character.
+  HH_dot_mm,
+
+  /// Corresponds to the ICU "HH 'h' mm" pattern used in Canadian French.
+  ///
+  /// This format uses 24-hour two-digit zero-padded hours. Controls are always
+  /// laid out horizontally. Hours are separated from minutes by letter 'h'.
+  frenchCanadian,
+
+  /// Corresponds to the ICU 'H:mm' pattern.
+  ///
+  /// This format uses 24-hour non-padded variable-length hours. Controls are
+  /// always laid out horizontally. Hours are separated from minutes by one
+  /// colon character.
+  H_colon_mm,
+
+  /// Corresponds to the ICU 'h:mm a' pattern.
+  ///
+  /// This format uses 12-hour non-padded variable-length hours with a day
+  /// period. Controls are laid out horizontally in portrait mode. In landscape
+  /// mode, the day period appears vertically after (consistent with the ambient
+  /// [TextDirection]) hour-minute indicator. Hours are separated from minutes
+  /// by one colon character.
+  h_colon_mm_space_a,
+
+  /// Corresponds to the ICU 'a h:mm' pattern.
+  ///
+  /// This format uses 12-hour non-padded variable-length hours with a day
+  /// period. Controls are laid out horizontally in portrait mode. In landscape
+  /// mode, the day period appears vertically before (consistent with the
+  /// ambient [TextDirection]) hour-minute indicator. Hours are separated from
+  /// minutes by one colon character.
+  a_space_h_colon_mm,
 }

@@ -1,4 +1,5 @@
 {
+  "timeOfDayFormat": "H:mm",
   "openAppDrawerTooltip": "ナビゲーションメニューを開く",
   "backButtonTooltip": "戻る",
   "closeButtonTooltip": "閉じる",
@@ -7,6 +8,7 @@
   "nextPageTooltip": "次のページ",
   "previousPageTooltip": "前のページ",
   "showMenuTooltip": "メニューを表示",
+  "aboutListTileTitle": "$applicationNameについて",
   "licensesPageTitle": "ライセンス",
   "pageRowsInfoTitle": "$rowCount行中の$firstRow–$lastRow",
   "pageRowsInfoTitleApproximate": "約$rowCount行中の$firstRow–$lastRow",
