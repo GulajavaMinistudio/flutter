@@ -8,10 +8,7 @@ import 'package:flutter/foundation.dart';
 
 import 'basic_types.dart';
 import 'border_radius.dart';
-import 'decoration.dart';
 import 'edge_insets.dart';
-
-export 'edge_insets.dart' show EdgeInsets;
 
 /// The shape to use when rendering a [Border] or [BoxDecoration].
 enum BoxShape {
@@ -401,7 +398,7 @@ class Border {
       ..color = top.color
       ..strokeWidth = width
       ..style = PaintingStyle.stroke;
-    canvas.drawRect(rect.inflate(width / 2.0), paint);
+    canvas.drawRect(rect.deflate(width / 2.0), paint);
   }
 
   @override
