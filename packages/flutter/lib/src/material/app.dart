@@ -488,7 +488,6 @@ class _MaterialAppState extends State<MaterialApp> {
     return null;
   }
 
-
   Route<dynamic> _onUnknownRoute(RouteSettings settings) {
     assert(() {
       if (widget.onUnknownRoute == null) {
@@ -505,7 +504,7 @@ class _MaterialAppState extends State<MaterialApp> {
         );
       }
       return true;
-    });
+    }());
     final Route<dynamic> result = widget.onUnknownRoute(settings);
     assert(() {
       if (result == null) {
@@ -517,7 +516,7 @@ class _MaterialAppState extends State<MaterialApp> {
         );
       }
       return true;
-    });
+    }());
     return result;
   }
 
@@ -570,7 +569,7 @@ class _MaterialAppState extends State<MaterialApp> {
         );
       }
       return true;
-    });
+    }());
 
     return new ScrollConfiguration(
       behavior: new _MaterialScrollBehavior(),

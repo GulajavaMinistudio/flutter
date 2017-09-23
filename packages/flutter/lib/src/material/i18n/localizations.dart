@@ -4,7 +4,7 @@
 
 // This file has been automatically generated.  Please do not edit it manually.
 // To regenerate the file, use:
-// dart dev/tools/gen_localizations.dart lib/src/material/i18n material
+// dart dev/tools/gen_localizations.dart packages/flutter/lib/src/material/i18n material
 
 /// Maps from [Locale.languageCode] to a map that contains the localized strings
 /// for that locale.
@@ -12,6 +12,7 @@
 /// This variable is used by [MaterialLocalizations].
 const Map<String, Map<String, String>> localizations = const <String, Map<String, String>> {
   "ar": const <String, String>{
+    "scriptCategory": r"tall",
     "timeOfDayFormat": r"h:mm a",
     "openAppDrawerTooltip": r"افتح قائمة التنقل",
     "backButtonTooltip": r"الى الخلف",
@@ -40,6 +41,7 @@ const Map<String, Map<String, String>> localizations = const <String, Map<String
     "postMeridiemAbbreviation": r"م",
   },
   "de": const <String, String>{
+    "scriptCategory": r"English-like",
     "timeOfDayFormat": r"HH:mm",
     "openAppDrawerTooltip": r"Navigationsmenü öffnen",
     "backButtonTooltip": r"Zurück",
@@ -68,6 +70,7 @@ const Map<String, Map<String, String>> localizations = const <String, Map<String
     "viewLicensesButtonLabel": r"LIZENZEN ANZEIGEN",
   },
   "en": const <String, String>{
+    "scriptCategory": r"English-like",
     "timeOfDayFormat": r"h:mm a",
     "openAppDrawerTooltip": r"Open navigation menu",
     "backButtonTooltip": r"Back",
@@ -107,6 +110,7 @@ const Map<String, Map<String, String>> localizations = const <String, Map<String
     "timeOfDayFormat": r"HH:mm",
   },
   "es": const <String, String>{
+    "scriptCategory": r"English-like",
     "timeOfDayFormat": r"H:mm",
     "openAppDrawerTooltip": r"Abrir el menú de navegación",
     "backButtonTooltip": r"Espalda",
@@ -136,8 +140,11 @@ const Map<String, Map<String, String>> localizations = const <String, Map<String
   },
   "es_US": const <String, String>{
     "timeOfDayFormat": r"h:mm a",
+    "anteMeridiemAbbreviation": r"AM",
+    "postMeridiemAbbreviation": r"PM",
   },
   "fa": const <String, String>{
+    "scriptCategory": r"tall",
     "timeOfDayFormat": r"H:mm",
     "openAppDrawerTooltip": r"منوی ناوبری را باز کنید",
     "backButtonTooltip": r"بازگشت",
@@ -164,6 +171,7 @@ const Map<String, Map<String, String>> localizations = const <String, Map<String
     "viewLicensesButtonLabel": r"مشاهده مجوز",
   },
   "fr": const <String, String>{
+    "scriptCategory": r"English-like",
     "timeOfDayFormat": r"HH:mm",
     "openAppDrawerTooltip": r"Ouvrir le menu de navigation",
     "backButtonTooltip": r"Retour",
@@ -195,6 +203,7 @@ const Map<String, Map<String, String>> localizations = const <String, Map<String
     "timeOfDayFormat": r"HH 'h' mm",
   },
   "he": const <String, String>{
+    "scriptCategory": r"English-like",
     "timeOfDayFormat": r"H:mm",
     "openAppDrawerTooltip": r"פתח תפריט ניווט",
     "backButtonTooltip": r"אחורה",
@@ -221,6 +230,7 @@ const Map<String, Map<String, String>> localizations = const <String, Map<String
     "viewLicensesButtonLabel": r"ראה רישיונות",
   },
   "it": const <String, String>{
+    "scriptCategory": r"English-like",
     "timeOfDayFormat": r"HH:mm",
     "openAppDrawerTooltip": r"Apri il menu di navigazione",
     "backButtonTooltip": r"Indietro",
@@ -247,6 +257,7 @@ const Map<String, Map<String, String>> localizations = const <String, Map<String
     "viewLicensesButtonLabel": r"VEDI LE LICENZE",
   },
   "ja": const <String, String>{
+    "scriptCategory": r"dense",
     "timeOfDayFormat": r"H:mm",
     "openAppDrawerTooltip": r"ナビゲーションメニューを開く",
     "backButtonTooltip": r"戻る",
@@ -273,6 +284,7 @@ const Map<String, Map<String, String>> localizations = const <String, Map<String
     "viewLicensesButtonLabel": r"ライセンス表記",
   },
   "ps": const <String, String>{
+    "scriptCategory": r"tall",
     "timeOfDayFormat": r"HH:mm",
     "openAppDrawerTooltip": r"د پرانیستی نیینګ مینو",
     "backButtonTooltip": r"شاته",
@@ -299,6 +311,7 @@ const Map<String, Map<String, String>> localizations = const <String, Map<String
     "viewLicensesButtonLabel": r"لیدلس وګورئ",
   },
   "pt": const <String, String>{
+    "scriptCategory": r"English-like",
     "timeOfDayFormat": r"HH:mm",
     "openAppDrawerTooltip": r"Abrir menu de navegação",
     "backButtonTooltip": r"Costas",
@@ -325,6 +338,7 @@ const Map<String, Map<String, String>> localizations = const <String, Map<String
     "viewLicensesButtonLabel": r"VER LICENÇAS",
   },
   "ru": const <String, String>{
+    "scriptCategory": r"English-like",
     "timeOfDayFormat": r"H:mm",
     "openAppDrawerTooltip": r"Открыть меню навигации",
     "backButtonTooltip": r"Назад",
@@ -339,7 +353,9 @@ const Map<String, Map<String, String>> localizations = const <String, Map<String
     "rowsPerPageTitle": r"Строки на страницу:",
     "aboutListTileTitle": r"O $applicationName",
     "licensesPageTitle": r"Лицензии",
-    "selectedRowCountTitleOther": r"Выбранно $selectedRowCount строк",
+    "selectedRowCountTitleZero": r"Строки не выбраны",
+    "selectedRowCountTitleOne": r"Выбрана 1 строка",
+    "selectedRowCountTitleOther": r"Выбрано $selectedRowCount строк",
     "cancelButtonLabel": r"ОТМЕНИТЬ",
     "closeButtonLabel": r"ЗАКРЫТЬ",
     "continueButtonLabel": r"ПРОДОЛЖИТЬ",
@@ -351,6 +367,7 @@ const Map<String, Map<String, String>> localizations = const <String, Map<String
     "viewLicensesButtonLabel": r"ПРОСМОТРЕТЬ ЛИЦЕНЗИИ",
   },
   "sd": const <String, String>{
+    "scriptCategory": r"tall",
     "timeOfDayFormat": r"HH:mm",
     "openAppDrawerTooltip": r"اوپن جي مينڊيٽ مينيو",
     "backButtonTooltip": r"پوئتي",
@@ -377,6 +394,7 @@ const Map<String, Map<String, String>> localizations = const <String, Map<String
     "viewLicensesButtonLabel": r"لائسنس ڏسو",
   },
   "ur": const <String, String>{
+    "scriptCategory": r"tall",
     "timeOfDayFormat": r"h:mm a",
     "openAppDrawerTooltip": r"کھولیں نیویگیشن مینو",
     "backButtonTooltip": r"واپس",
@@ -405,6 +423,7 @@ const Map<String, Map<String, String>> localizations = const <String, Map<String
     "postMeridiemAbbreviation": r"PM",
   },
   "zh": const <String, String>{
+    "scriptCategory": r"dense",
     "timeOfDayFormat": r"ah:mm",
     "openAppDrawerTooltip": r"打开导航菜单",
     "backButtonTooltip": r"返回",
