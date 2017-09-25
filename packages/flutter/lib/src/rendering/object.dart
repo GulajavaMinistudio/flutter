@@ -17,7 +17,7 @@ import 'layer.dart';
 import 'node.dart';
 import 'semantics.dart';
 
-export 'package:flutter/foundation.dart' show FlutterError, InformationCollector, DiagnosticsNode, DiagnosticsProperty, StringProperty, DoubleProperty, EnumProperty, IntProperty, DiagnosticPropertiesBuilder;
+export 'package:flutter/foundation.dart' show FlutterError, InformationCollector, DiagnosticsNode, DiagnosticsProperty, StringProperty, DoubleProperty, EnumProperty, FlagProperty, IntProperty, DiagnosticPropertiesBuilder;
 export 'package:flutter/gestures.dart' show HitTestEntry, HitTestResult;
 export 'package:flutter/painting.dart';
 
@@ -1317,7 +1317,7 @@ class PipelineOwner {
 /// Hit testing is even more open-ended than layout. There is no method to
 /// override, you are expected to provide one.
 ///
-/// The general behaviour of your hit-testing method should be similar to the
+/// The general behavior of your hit-testing method should be similar to the
 /// behavior described for [RenderBox]. The main difference is that the input
 /// need not be an [Offset]. You are also allowed to use a different subclass of
 /// [HitTestEntry] when adding entries to the [HitTestResult]. When the
