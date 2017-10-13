@@ -4,7 +4,7 @@
 
 // This file has been automatically generated.  Please do not edit it manually.
 // To regenerate the file, use:
-// dart dev/tools/gen_localizations.dart packages/flutter/lib/src/material/i18n material
+// dart dev/tools/gen_localizations.dart packages/flutter_localizations/lib/src/l10n material
 
 /// Maps from [Locale.languageCode] to a map that contains the localized strings
 /// for that locale.
@@ -209,7 +209,7 @@ const Map<String, Map<String, String>> localizations = const <String, Map<String
     "backButtonTooltip": r"אחורה",
     "closeButtonTooltip": r"סגור",
     "nextMonthTooltip": r"חודש הבא",
-    "previousMonthTooltip": r"חודש שעבר",
+    "previousMonthTooltip": r"חודש קודם",
     "nextPageTooltip": r"עמוד הבא",
     "previousPageTooltip": r"עמוד קודם",
     "showMenuTooltip": r"הצג תפריט",
@@ -221,13 +221,13 @@ const Map<String, Map<String, String>> localizations = const <String, Map<String
     "selectedRowCountTitleOther": r"$selectedRowCount פריטים שנבחרו",
     "cancelButtonLabel": r"ביטול",
     "closeButtonLabel": r"סגור",
-    "continueButtonLabel": r"לְהַמשִׁיך",
-    "copyButtonLabel": r"קיבלתי!",
+    "continueButtonLabel": r"המשך",
+    "copyButtonLabel": r"העתק",
     "cutButtonLabel": r"גזור",
-    "okButtonLabel": r"בסדר",
+    "okButtonLabel": r"אישור",
     "pasteButtonLabel": r"הדבק",
     "selectAllButtonLabel": r"בחר הכל",
-    "viewLicensesButtonLabel": r"ראה רישיונות",
+    "viewLicensesButtonLabel": r"הצג רישיונות",
   },
   "it": const <String, String>{
     "scriptCategory": r"English-like",
@@ -249,8 +249,8 @@ const Map<String, Map<String, String>> localizations = const <String, Map<String
     "cancelButtonLabel": r"ANNULLA",
     "closeButtonLabel": r"CHIUDI",
     "continueButtonLabel": r"CONTINUA",
-    "copyButtonLabel": r"COPY",
-    "cutButtonLabel": r"TAGLIARE",
+    "copyButtonLabel": r"COPIA",
+    "cutButtonLabel": r"TAGLIA",
     "okButtonLabel": r"OK",
     "pasteButtonLabel": r"INCOLLA",
     "selectAllButtonLabel": r"SELEZIONA TUTTO",

@@ -241,7 +241,7 @@ class HotRunner extends ResidentRunner {
     return devFSUris;
   }
 
-  Future<bool> _updateDevFS() async {
+  Future<bool> _updateDevFS({ bool fullRestart: false }) async {
     if (!_refreshDartDependencies()) {
       // Did not update DevFS because of a Dart source error.
       return false;
@@ -261,6 +261,7 @@ class HotRunner extends ResidentRunner {
         bundle: assetBundle,
         bundleDirty: rebuildBundle,
         fileFilter: _dartDependencies,
+        fullRestart: fullRestart
       );
       if (!result)
         return false;
@@ -334,15 +335,19 @@ class HotRunner extends ResidentRunner {
     }
 
     final Stopwatch restartTimer = new Stopwatch()..start();
-    final bool updatedDevFS = await _updateDevFS();
+    if (previewDart2) {
+      for (FlutterDevice device in flutterDevices) {
+        // Reset generator so that full kernel file is produced for VM to
+        // restart from.
+        if (device.generator != null)
+          device.generator.reset();
+      }
+    }
+    final bool updatedDevFS = await _updateDevFS(fullRestart: true);
     if (!updatedDevFS)
       return new OperationResult(1, 'DevFS synchronization failed');
     // Check if the isolate is paused and resume it.
     for (FlutterDevice device in flutterDevices) {
-      // VM must have accepted the kernel binary, there will be no reload
-      // report, so we let incremental compiler know that source code was accepted.
-      if (device.generator != null)
-        device.generator.accept();
       for (FlutterView view in device.views) {
         if (view.uiIsolate != null) {
           // Reload the isolate.
@@ -357,7 +362,7 @@ class HotRunner extends ResidentRunner {
     }
     // We are now running from source.
     _runningFromSnapshot = false;
-    await _launchFromDevFS(mainPath);
+    await _launchFromDevFS(previewDart2 ? mainPath + '.dill' : mainPath);
     restartTimer.stop();
     printTrace('Restart performed in '
         '${getElapsedAsMilliseconds(restartTimer.elapsed)}.');
@@ -425,12 +430,22 @@ class HotRunner extends ResidentRunner {
         status.cancel();
         if (result.isOk)
           printStatus("${result.message} in ${getElapsedAsMilliseconds(timer.elapsed)}.");
+        if (result.hint != null)
+          printStatus(result.hint);
         return result;
       } catch (error) {
         status.cancel();
         rethrow;
       }
     }
+  }
+
+  String _uriToRelativePath(Uri uri) {
+    final String path = uri.toString();
+    final String base = new Uri.file(projectRootPath).toString();
+    if (path.startsWith(base))
+      return path.substring(base.length + 1);
+    return path;
   }
 
   Future<OperationResult> _reloadSources({ bool pause: false }) async {
@@ -601,9 +616,40 @@ class HotRunner extends ResidentRunner {
         !reassembleTimedOut &&
         shouldReportReloadTime)
       flutterUsage.sendTiming('hot', 'reload', reloadTimer.elapsed);
+
+    String unusedElementMessage;
+    if (!reassembleAndScheduleErrors && !reassembleTimedOut) {
+      final List<Future<List<ProgramElement>>> unusedReports =
+        <Future<List<ProgramElement>>>[];
+      for (FlutterDevice device in flutterDevices)
+        unusedReports.add(device.unusedChangesInLastReload());
+      final List<ProgramElement> unusedElements = <ProgramElement>[];
+      for (Future<List<ProgramElement>> unusedReport in unusedReports)
+        unusedElements.addAll(await unusedReport);
+
+      if (unusedElements.isNotEmpty) {
+        unusedElementMessage =
+          '\nThe following program elements were changed by the reload, '
+          'but did not run when the view was reassembled. If this code '
+          'only runs at start-up, you will need to restart ("R") for '
+          'the changes to have an effect.';
+        for (ProgramElement unusedElement in unusedElements) {
+          final String name = unusedElement.qualifiedName;
+          final String path = _uriToRelativePath(unusedElement.uri);
+          final int line = unusedElement.line;
+          String elementDescription;
+          if (line == null)
+            elementDescription = '$name ($path)';
+          else
+            elementDescription = '$name ($path:$line)';
+          unusedElementMessage += '\n - $elementDescription';
+        }
+      }
+    }
+
     return new OperationResult(
       reassembleAndScheduleErrors ? 1 : OperationResult.ok.code,
-      reloadMessage
+      reloadMessage, unusedElementMessage
     );
   }
 
