@@ -23,39 +23,61 @@ import 'package:flutter/widgets.dart';
 ///
 /// See also:
 ///
-///  * [Icon]
+///  * [Icon], used to show these icons.
+///  * <https://github.com/flutter/cupertino_icons/blob/master/map.png>, a map of the
+///    icons in this icons font.
 class CupertinoIcons {
   CupertinoIcons._();
 
-  static const String iconFont = 'packages/cupertino_icons/CupertinoIcons';
+  /// The icon font used for Cupertino icons.
+  static const String iconFont = 'CupertinoIcons';
+  /// The dependent package providing the Cupertino icons font.
+  static const String iconFontPackage = 'cupertino_icons';
 
   // Manually maintained list
 
-  static const IconData left_chevron = const IconData(0xf3f0, fontFamily: iconFont);
+  /// A thin left chevron.
+  static const IconData left_chevron = const IconData(0xf3f0, fontFamily: iconFont, fontPackage: iconFontPackage);
 
-  static const IconData right_chevron = const IconData(0xf3f2, fontFamily: iconFont);
+  /// A thin right chevron.
+  static const IconData right_chevron = const IconData(0xf3f2, fontFamily: iconFont, fontPackage: iconFontPackage);
 
-  static const IconData share = const IconData(0xf4ca, fontFamily: iconFont);
+  /// iOS style share icon with an arrow pointing up from a box.
+  static const IconData share = const IconData(0xf4ca, fontFamily: iconFont, fontPackage: iconFontPackage);
 
-  static const IconData book = const IconData(0xf3e7, fontFamily: iconFont);
+  /// A book silhouette spread open.
+  static const IconData book = const IconData(0xf3e7, fontFamily: iconFont, fontPackage: iconFontPackage);
 
-  static const IconData info = const IconData(0xf44c, fontFamily: iconFont);
+  /// A letter 'i' in a circle.
+  static const IconData info = const IconData(0xf44c, fontFamily: iconFont, fontPackage: iconFontPackage);
 
-  static const IconData reply = const IconData(0xf4c6, fontFamily: iconFont);
+  /// A curved up and left pointing arrow.
+  static const IconData reply = const IconData(0xf4c6, fontFamily: iconFont, fontPackage: iconFontPackage);
 
-  static const IconData conversation_bubble = const IconData(0xf3fb, fontFamily: iconFont);
+  /// A chat bubble.
+  static const IconData conversation_bubble = const IconData(0xf3fb, fontFamily: iconFont, fontPackage: iconFontPackage);
 
-  static const IconData profile_circled = const IconData(0xf419, fontFamily: iconFont);
+  /// A person's silhouette in a circle.
+  static const IconData profile_circled = const IconData(0xf419, fontFamily: iconFont, fontPackage: iconFontPackage);
 
-  static const IconData plus_circled = const IconData(0xf48a, fontFamily: iconFont);
+  /// A '+' sign in a circle.
+  static const IconData plus_circled = const IconData(0xf48a, fontFamily: iconFont, fontPackage: iconFontPackage);
 
-  static const IconData minus_circled = const IconData(0xf463, fontFamily: iconFont);
+  /// A '-' sign in a circle.
+  static const IconData minus_circled = const IconData(0xf463, fontFamily: iconFont, fontPackage: iconFontPackage);
 
-  static const IconData flag = const IconData(0xf42c, fontFamily: iconFont);
+  /// A right facing flag and pole outline.
+  static const IconData flag = const IconData(0xf42c, fontFamily: iconFont, fontPackage: iconFontPackage);
 
-  static const IconData search = const IconData(0xf4c6, fontFamily: iconFont);
+  /// A magnifier loop outline.
+  static const IconData search = const IconData(0xf4c6, fontFamily: iconFont, fontPackage: iconFontPackage);
 
-  static const IconData check_mark = const IconData(0xf41e, fontFamily: iconFont);
+  /// A checkmark.
+  static const IconData check_mark = const IconData(0xf41e, fontFamily: iconFont, fontPackage: iconFontPackage);
 
-  static const IconData check_mark_circled = const IconData(0xf41f, fontFamily: iconFont);
+  /// A checkmark in a circle.
+  static const IconData check_mark_circled = const IconData(0xf41f, fontFamily: iconFont, fontPackage: iconFontPackage);
+
+  /// A thicker left chevron used in iOS for the nav bar back button.
+  static const IconData back = const IconData(0xf3f0, fontFamily: iconFont, fontPackage: iconFontPackage);
 }
