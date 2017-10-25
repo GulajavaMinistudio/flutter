@@ -791,15 +791,13 @@ class NavigatorState extends State<Navigator> with TickerProviderStateMixin {
         }());
         push(_routeNamed(Navigator.defaultRouteName));
       } else {
-        for (Route<dynamic> route in plannedInitialRoutes)
-          push(route);
+        plannedInitialRoutes.forEach(push);
       }
     } else {
       Route<dynamic> route;
       if (initialRouteName != Navigator.defaultRouteName)
         route = _routeNamed(initialRouteName, allowNull: true);
-      if (route == null)
-        route = _routeNamed(Navigator.defaultRouteName);
+      route ??= _routeNamed(Navigator.defaultRouteName);
       push(route);
     }
     for (Route<dynamic> route in _history)
@@ -1329,8 +1327,7 @@ class NavigatorState extends State<Navigator> with TickerProviderStateMixin {
         absorber?.absorbing = true;
       });
     }
-    for (int pointer in _activePointers.toList())
-      WidgetsBinding.instance.cancelPointer(pointer);
+    _activePointers.toList().forEach(WidgetsBinding.instance.cancelPointer);
   }
 
   @override

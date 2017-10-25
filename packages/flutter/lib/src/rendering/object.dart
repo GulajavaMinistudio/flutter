@@ -1964,7 +1964,7 @@ abstract class RenderObject extends AbstractNode with DiagnosticableTreeMixin im
     // yet (that is, our layer might not have been detached yet), because the
     // same node that skipped us in layout is above us in the tree (obviously)
     // and therefore may not have had a chance to paint yet (since the tree
-    // paints in reverse order). In particular this will happen if they are have
+    // paints in reverse order). In particular this will happen if they have
     // a different layer, because there's a repaint boundary between us.
     if (_needsLayout)
       return;
@@ -2736,9 +2736,7 @@ abstract class ContainerRenderObjectMixin<ChildType extends RenderObject, Parent
 
   /// Add all the children to the end of this render object's child list.
   void addAll(List<ChildType> children) {
-    if (children != null)
-      for (ChildType child in children)
-        add(child);
+    children?.forEach(add);
   }
 
   void _removeFromChildList(ChildType child) {
@@ -2923,7 +2921,7 @@ class FlutterErrorDetailsForRendering extends FlutterErrorDetails {
 
 /// Describes the semantics information a [RenderObject] wants to add to its
 /// parent.
-/// 
+///
 /// It has two notable subclasses:
 ///  * [_InterestingSemanticsFragment] describing actual semantic information to
 ///    be added to the parent.
