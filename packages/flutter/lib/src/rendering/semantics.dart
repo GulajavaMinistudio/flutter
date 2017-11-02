@@ -12,7 +12,6 @@ import 'package:flutter/services.dart';
 import 'package:vector_math/vector_math_64.dart';
 
 import 'debug.dart';
-import 'node.dart';
 import 'semantics_event.dart';
 
 export 'dart:ui' show SemanticsAction;
@@ -597,9 +596,18 @@ class SemanticsNode extends AbstractNode with DiagnosticableTreeMixin {
 
   static final SemanticsConfiguration _kEmptyConfig = new SemanticsConfiguration();
 
+  /// Reconfigures the properties of this object to describe the configuration
+  /// provided in the `config` argument and the children listen in the
+  /// `childrenInInversePaintOrder` argument.
+  ///
+  /// The arguments may be null; this represents an empty configuration (all
+  /// values at their defaults, no children).
+  ///
+  /// No reference is kept to the [SemanticsConfiguration] object, but the child
+  /// list is used as-is and should therefore not be changed after this call.
   void updateWith({
     @required SemanticsConfiguration config,
-    @required  List<SemanticsNode> childrenInInversePaintOrder,
+    @required List<SemanticsNode> childrenInInversePaintOrder,
   }) {
     config ??= _kEmptyConfig;
     if (_isDifferentFromCurrentSemanticAnnotation(config))
@@ -1232,9 +1240,29 @@ class SemanticsConfiguration {
 
   // TAGS
 
+  /// The set of tags that this configuration wants to add to all child
+  /// [SemanticsNode]s.
+  ///
+  /// See also:
+  ///  * [addTagForChildren] to add a tag and for more information about their
+  ///    usage.
   Iterable<SemanticsTag> get tagsForChildren => _tagsForChildren;
   Set<SemanticsTag> _tagsForChildren;
 
+  /// Specifies a [SemanticsTag] that this configuration wants to apply to all
+  /// child [SemanticsNode]s.
+  ///
+  /// The tag is added to all [SemanticsNode] that pass through the
+  /// [RenderObject] owning this configuration while looking to be attached to a
+  /// parent [SemanticsNode].
+  ///
+  /// Tags are used to communicate to a parent [SemanticsNode] that a child
+  /// [SemanticsNode] was passed through a particular [RenderObject]. The parent
+  /// can use this information to determine the shape of the semantics tree.
+  ///
+  /// See also:
+  ///  * [RenderSemanticsGestureHandler.excludeFromScrolling] for an example of
+  ///    how tags are used.
   void addTagForChildren(SemanticsTag tag) {
     _tagsForChildren ??= new Set<SemanticsTag>();
     _tagsForChildren.add(tag);
