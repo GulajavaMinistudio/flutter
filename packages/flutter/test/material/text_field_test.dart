@@ -3,12 +3,14 @@
 // found in the LICENSE file.
 
 import 'dart:async';
+import 'dart:ui' show SemanticsFlags;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
+import '../widgets/semantics_tester.dart';
 import 'feedback_tester.dart';
 
 class MockClipboard {
@@ -815,6 +817,7 @@ void main() {
 
   testWidgets('TextField with specified helperStyle', (WidgetTester tester) async {
     final TextStyle style = new TextStyle(
+      inherit: false,
       color: Colors.pink[500],
       fontSize: 10.0,
     );
@@ -863,6 +866,7 @@ void main() {
 
   testWidgets('TextField with specified hintStyle', (WidgetTester tester) async {
     final TextStyle hintStyle = new TextStyle(
+      inherit: false,
       color: Colors.pink[500],
       fontSize: 10.0,
     );
@@ -884,6 +888,7 @@ void main() {
 
   testWidgets('TextField with specified prefixStyle', (WidgetTester tester) async {
     final TextStyle prefixStyle = new TextStyle(
+      inherit: false,
       color: Colors.pink[500],
       fontSize: 10.0,
     );
@@ -971,6 +976,7 @@ void main() {
   testWidgets('TextField prefix and suffix appear correctly with hint text',
           (WidgetTester tester) async {
     final TextStyle hintStyle = new TextStyle(
+      inherit: false,
       color: Colors.pink[500],
       fontSize: 10.0,
     );
@@ -1636,5 +1642,26 @@ void main() {
     await tester.pump();
 
     expect(find.text('5 / 10'), findsOneWidget);
+  });
+
+  testWidgets('TextField identifies as text field in semantics', (WidgetTester tester) async {
+    final SemanticsTester semantics = new SemanticsTester(tester);
+
+    await tester.pumpWidget(
+      new MaterialApp(
+        home: const Material(
+          child: const DefaultTextStyle(
+            style: const TextStyle(fontFamily: 'Ahem', fontSize: 10.0),
+            child: const Center(
+              child: const TextField(
+                maxLength: 10,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(semantics, includesNodeWith(flags: <SemanticsFlags>[SemanticsFlags.isTextField]));
   });
 }
