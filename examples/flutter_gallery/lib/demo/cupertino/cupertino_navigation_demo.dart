@@ -131,17 +131,21 @@ class CupertinoDemoTab1 extends StatelessWidget {
             largeTitle: const Text('Colors'),
             trailing: const ExitButton(),
           ),
-          new SliverList(
-            delegate: new SliverChildBuilderDelegate(
-              (BuildContext context, int index) {
-                return new Tab1RowItem(
-                  index: index,
-                  lastItem: index == 49,
-                  color: colorItems[index],
-                  colorName: colorNameItems[index],
-                );
-              },
-              childCount: 50,
+          new SliverPadding(
+            // Top media query padding already consumed by CupertinoSliverNavigationBar.
+            padding: MediaQuery.of(context).removePadding(removeTop: true).padding,
+            sliver: new SliverList(
+              delegate: new SliverChildBuilderDelegate(
+                (BuildContext context, int index) {
+                  return new Tab1RowItem(
+                    index: index,
+                    lastItem: index == 49,
+                    color: colorItems[index],
+                    colorName: colorNameItems[index],
+                  );
+                },
+                childCount: 50,
+              ),
             ),
           ),
         ],
@@ -271,7 +275,7 @@ class Tab1ItemPageState extends State<Tab1ItemPage> {
       ),
       child: new ListView(
         children: <Widget>[
-          const Padding(padding: const EdgeInsets.only(top: 80.0)),
+          const Padding(padding: const EdgeInsets.only(top: 16.0)),
           new Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: new Row(
@@ -396,7 +400,6 @@ class CupertinoDemoTab2 extends StatelessWidget {
       ),
       child: new ListView(
         children: <Widget>[
-          const Padding(padding: const EdgeInsets.only(top: 60.0)),
           new Tab2Header(),
         ]..addAll(buildTab2Conversation()),
       ),
@@ -599,94 +602,71 @@ class Tab2ConversationAvatar extends StatelessWidget {
   }
 }
 
+class Tab2ConversationRow extends StatelessWidget {
+  const Tab2ConversationRow({this.avatar, this.text});
+
+  final Tab2ConversationAvatar avatar;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final List<Widget> children = <Widget>[];
+    if (avatar != null)
+      children.add(avatar);
+
+    final bool isSelf = avatar == null;
+    children.add(
+      new Tab2ConversationBubble(
+        text: text,
+        color: isSelf
+          ? Tab2ConversationBubbleColor.blue
+          : Tab2ConversationBubbleColor.gray,
+      ),
+    );
+    return new Row(
+      mainAxisAlignment: isSelf ? MainAxisAlignment.end : MainAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: isSelf ? CrossAxisAlignment.center : CrossAxisAlignment.end,
+      children: children,
+    );
+  }
+}
+
 List<Widget> buildTab2Conversation() {
  return <Widget>[
-    new Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget> [
-        const Tab2ConversationBubble(
-          text: "My Xanadu doesn't look right",
-          color: Tab2ConversationBubbleColor.blue
-        ),
-      ],
+    const Tab2ConversationRow(
+      text: "My Xanadu doesn't look right",
     ),
-    new Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: <Widget> [
-        const Tab2ConversationAvatar(
-          text: 'KL',
-          color: const Color(0xFFFD5015),
-        ),
-        const Tab2ConversationBubble(
-          text: "We'll rush you a new one.\nIt's gonna be incredible",
-          color: Tab2ConversationBubbleColor.gray,
-        ),
-      ],
+    const Tab2ConversationRow(
+      avatar: const Tab2ConversationAvatar(
+        text: 'KL',
+        color: const Color(0xFFFD5015),
+      ),
+      text: "We'll rush you a new one.\nIt's gonna be incredible",
     ),
-    new Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget> [
-        const Tab2ConversationBubble(
-          text: 'Awesome thanks!',
-          color: Tab2ConversationBubbleColor.blue,
-        ),
-      ],
+    const Tab2ConversationRow(
+      text: 'Awesome thanks!',
     ),
-    new Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: <Widget> [
-        const Tab2ConversationAvatar(
-          text: 'SJ',
-          color: const Color(0xFF34CAD6),
-        ),
-        const Tab2ConversationBubble(
-          text: "We'll send you our\nnewest Labrabor too!",
-          color: Tab2ConversationBubbleColor.gray,
-        ),
-      ],
+    const Tab2ConversationRow(
+      avatar: const Tab2ConversationAvatar(
+        text: 'SJ',
+        color: const Color(0xFF34CAD6),
+      ),
+      text: "We'll send you our\nnewest Labrabor too!",
     ),
-    new Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget> [
-        const Tab2ConversationBubble(
-          text: 'Yay',
-          color: Tab2ConversationBubbleColor.blue,
-        ),
-      ],
+    const Tab2ConversationRow(
+      text: 'Yay',
     ),
-    new Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: <Widget> [
-        const Tab2ConversationAvatar(
-          text: 'KL',
-          color: const Color(0xFFFD5015),
-        ),
-        const Tab2ConversationBubble(
-          text: "Actually there's one more thing...",
-          color: Tab2ConversationBubbleColor.gray,
-        ),
-      ],
+    const Tab2ConversationRow(
+      avatar: const Tab2ConversationAvatar(
+        text: 'KL',
+        color: const Color(0xFFFD5015),
+      ),
+      text: "Actually there's one more thing...",
     ),
-    new Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget> [
-        const Tab2ConversationBubble(
-          text: "What's that?",
-          color: Tab2ConversationBubbleColor.blue,
-        ),
-      ],
+    const Tab2ConversationRow(
+      text: "What's that?",
     ),
-    const Padding(padding: const EdgeInsets.only(bottom: 80.0)),
   ];
 }
 
@@ -702,7 +682,7 @@ class CupertinoDemoTab3 extends StatelessWidget {
         decoration: const BoxDecoration(color: const Color(0xFFEFEFF4)),
         child: new ListView(
           children: <Widget>[
-            const Padding(padding: const EdgeInsets.only(top: 100.0)),
+            const Padding(padding: const EdgeInsets.only(top: 32.0)),
             new GestureDetector(
               onTap: () {
                 Navigator.of(context, rootNavigator: true).push(
