@@ -4,9 +4,11 @@ dependencies:
     sdk: flutter
   collection: 1.14.3
   intl: 0.15.2
+  connectivity: 0.1.0
   string_scanner: 1.0.2
   url_launcher: 0.4.2+5
   cupertino_icons: 0.1.1
+  video_player: 0.0.5
 
   # Also update dev/benchmarks/complex_layout/pubspec.yaml
   flutter_gallery_assets:
@@ -45,7 +47,7 @@ dev_dependencies:
   path: 1.4.2 # TRANSITIVE DEPENDENCY
   pool: 1.3.3 # TRANSITIVE DEPENDENCY
   pub_semver: 1.3.2 # TRANSITIVE DEPENDENCY
-  quiver: 0.26.0 # TRANSITIVE DEPENDENCY
+  quiver: 0.26.2 # TRANSITIVE DEPENDENCY
   shelf: 0.7.1 # TRANSITIVE DEPENDENCY
   shelf_packages_handler: 1.0.3 # TRANSITIVE DEPENDENCY
   shelf_static: 0.2.6 # TRANSITIVE DEPENDENCY
