@@ -3,9 +3,11 @@
 // found in the LICENSE file.
 
 import 'dart:async';
+import 'dart:io';
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:device_info/device_info.dart';
 
 // TODO(sigurdm): These should not be stored here.
 const String butterflyUri =
@@ -30,7 +32,7 @@ class VideoCard extends StatelessWidget {
           aspectRatio: 3 / 2,
           child: new Hero(
             tag: controller,
-            child: new VideoPlayer(controller),
+            child: new VideoPlayerLoading(controller),
           ),
         ),
       ),
@@ -97,6 +99,50 @@ class VideoCard extends StatelessWidget {
   }
 }
 
+class VideoPlayerLoading extends StatefulWidget {
+  final VideoPlayerController controller;
+
+  const VideoPlayerLoading(this.controller);
+
+  @override
+  _VideoPlayerLoadingState createState() => new _VideoPlayerLoadingState();
+}
+
+class _VideoPlayerLoadingState extends State<VideoPlayerLoading> {
+  bool _initialized;
+
+  @override
+  void initState() {
+    super.initState();
+    _initialized = widget.controller.value.initialized;
+    widget.controller.addListener(() {
+      if (!mounted) {
+        return;
+      }
+      final bool controllerInitialized = widget.controller.value.initialized;
+      if (_initialized != controllerInitialized) {
+        setState(() {
+          _initialized = controllerInitialized;
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_initialized) {
+      return new VideoPlayer(widget.controller);
+    }
+    return new Stack(
+      children: <Widget>[
+        new VideoPlayer(widget.controller),
+        const Center(child: const CircularProgressIndicator()),
+      ],
+      fit: StackFit.expand,
+    );
+  }
+}
+
 class VideoPlayPause extends StatefulWidget {
   final VideoPlayerController controller;
 
@@ -132,37 +178,31 @@ class _VideoPlayPauseState extends State<VideoPlayPause> {
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget> children = <Widget>[
-      new GestureDetector(
-        child: new VideoPlayer(controller),
-        onTap: () {
-          if (!controller.value.initialized) {
-            return;
-          }
-          if (controller.value.isPlaying) {
-            imageFadeAnimation = new FadeAnimation(
-              child: new Icon(Icons.pause, size: 100.0),
-            );
-            controller.pause();
-          } else {
-            imageFadeAnimation = new FadeAnimation(
-              child: new Icon(Icons.play_arrow, size: 100.0),
-            );
-            controller.play();
-          }
-        },
-      ),
-      new Center(child: imageFadeAnimation),
-    ];
-
-    if (!controller.value.initialized) {
-      children.add(new Container());
-    }
-
     return new Stack(
       alignment: Alignment.bottomCenter,
-      fit: StackFit.passthrough,
-      children: children,
+      fit: StackFit.expand,
+      children: <Widget>[
+        new GestureDetector(
+          child: new VideoPlayerLoading(controller),
+          onTap: () {
+            if (!controller.value.initialized) {
+              return;
+            }
+            if (controller.value.isPlaying) {
+              imageFadeAnimation = new FadeAnimation(
+                child: new Icon(Icons.pause, size: 100.0),
+              );
+              controller.pause();
+            } else {
+              imageFadeAnimation = new FadeAnimation(
+                child: new Icon(Icons.play_arrow, size: 100.0),
+              );
+              controller.play();
+            }
+          },
+        ),
+        new Center(child: imageFadeAnimation),
+      ],
     );
   }
 }
@@ -310,6 +350,12 @@ class VideoDemo extends StatefulWidget {
   _VideoDemoState createState() => new _VideoDemoState();
 }
 
+final DeviceInfoPlugin deviceInfoPlugin = new DeviceInfoPlugin();
+
+Future<bool> isIOSSimulator() async {
+  return Platform.isIOS && !(await deviceInfoPlugin.iosInfo).isPhysicalDevice;
+}
+
 class _VideoDemoState extends State<VideoDemo>
     with SingleTickerProviderStateMixin {
   final VideoPlayerController butterflyController = new VideoPlayerController(
@@ -321,6 +367,7 @@ class _VideoDemoState extends State<VideoDemo>
 
   final GlobalKey<ScaffoldState> scaffoldKey = new GlobalKey<ScaffoldState>();
   final Completer<Null> connectedCompleter = new Completer<Null>();
+  bool isSupported = true;
 
   @override
   void initState() {
@@ -337,6 +384,9 @@ class _VideoDemoState extends State<VideoDemo>
 
     initController(butterflyController);
     initController(beeController);
+    isIOSSimulator().then((bool result) {
+      isSupported = !result;
+    });
   }
 
   @override
@@ -353,24 +403,30 @@ class _VideoDemoState extends State<VideoDemo>
       appBar: new AppBar(
         title: const Text('Videos'),
       ),
-      body: new ConnectivityOverlay(
-        child: new ListView(
-          children: <Widget>[
-            new VideoCard(
-              title: 'Butterfly',
-              subtitle: '… flutters by',
-              controller: butterflyController,
+      body: (isSupported)
+          ? new ConnectivityOverlay(
+              child: new ListView(
+                children: <Widget>[
+                  new VideoCard(
+                    title: 'Butterfly',
+                    subtitle: '… flutters by',
+                    controller: butterflyController,
+                  ),
+                  new VideoCard(
+                    title: 'Bee',
+                    subtitle: '… gently buzzing',
+                    controller: beeController,
+                  ),
+                ],
+              ),
+              connectedCompleter: connectedCompleter,
+              scaffoldKey: scaffoldKey,
+            )
+          : const Center(
+              child: const Text(
+                'The video demo is not supported on the iOS Simulator.',
+              ),
             ),
-            new VideoCard(
-              title: 'Bee',
-              subtitle: '… gently buzzing',
-              controller: beeController,
-            ),
-          ],
-        ),
-        connectedCompleter: connectedCompleter,
-        scaffoldKey: scaffoldKey,
-      ),
     );
   }
 }
