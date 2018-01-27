@@ -31,6 +31,10 @@ typedef bool SemanticsNodeVisitor(SemanticsNode node);
 /// current selection or (if nothing is currently selected) start a selection.
 typedef void MoveCursorHandler(bool extendSelection);
 
+/// Signature for the [SemanticsAction.setSelection] handlers to change the
+/// text selection (or re-position the cursor) to `selection`.
+typedef void SetSelectionHandler(TextSelection selection);
+
 typedef void _SemanticsActionHandler(dynamic args);
 
 /// A tag for a [SemanticsNode].
@@ -273,8 +277,12 @@ class SemanticsProperties extends DiagnosticableTree {
     this.onScrollDown,
     this.onIncrease,
     this.onDecrease,
+    this.onCopy,
+    this.onCut,
+    this.onPaste,
     this.onMoveCursorForwardByCharacter,
     this.onMoveCursorBackwardByCharacter,
+    this.onSetSelection,
   });
 
   /// If non-null, indicates that this subtree represents something that can be
@@ -467,6 +475,31 @@ class SemanticsProperties extends DiagnosticableTree {
   /// volume down button.
   final VoidCallback onDecrease;
 
+  /// The handler for [SemanticsAction.copy].
+  ///
+  /// This is a request to copy the current selection to the clipboard.
+  ///
+  /// TalkBack users on Android can trigger this action from the local context
+  /// menu of a text field, for example.
+  final VoidCallback onCopy;
+
+  /// The handler for [SemanticsAction.cut].
+  ///
+  /// This is a request to cut the current selection and place it in the
+  /// clipboard.
+  ///
+  /// TalkBack users on Android can trigger this action from the local context
+  /// menu of a text field, for example.
+  final VoidCallback onCut;
+
+  /// The handler for [SemanticsAction.paste].
+  ///
+  /// This is a request to paste the current content of the clipboard.
+  ///
+  /// TalkBack users on Android can trigger this action from the local context
+  /// menu of a text field, for example.
+  final VoidCallback onPaste;
+
   /// The handler for [SemanticsAction.onMoveCursorForwardByCharacter].
   ///
   /// This handler is invoked when the user wants to move the cursor in a
@@ -484,6 +517,15 @@ class SemanticsProperties extends DiagnosticableTree {
   /// TalkBack users can trigger this by pressing the volume down key while the
   /// input focus is in a text field.
   final MoveCursorHandler onMoveCursorBackwardByCharacter;
+
+  /// The handler for [SemanticsAction.setSelection].
+  ///
+  /// This handler is invoked when the user either wants to change the currently
+  /// selected text in a text field or change the position of the cursor.
+  ///
+  /// TalkBack users can trigger this handler by selecting "Move cursor to
+  /// beginning/end" or "Select all" from the local context menu.
+  final SetSelectionHandler onSetSelection;
 
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder description) {
@@ -1604,6 +1646,46 @@ class SemanticsConfiguration {
     _onDecrease = value;
   }
 
+  /// The handler for [SemanticsAction.copy].
+  ///
+  /// This is a request to copy the current selection to the clipboard.
+  ///
+  /// TalkBack users on Android can trigger this action from the local context
+  /// menu of a text field, for example.
+  VoidCallback get onCopy => _onCopy;
+  VoidCallback _onCopy;
+  set onCopy(VoidCallback value) {
+    _addArgumentlessAction(SemanticsAction.copy, value);
+    _onCopy = value;
+  }
+
+  /// The handler for [SemanticsAction.cut].
+  ///
+  /// This is a request to cut the current selection and place it in the
+  /// clipboard.
+  ///
+  /// TalkBack users on Android can trigger this action from the local context
+  /// menu of a text field, for example.
+  VoidCallback get onCut => _onCut;
+  VoidCallback _onCut;
+  set onCut(VoidCallback value) {
+    _addArgumentlessAction(SemanticsAction.cut, value);
+    _onCut = value;
+  }
+
+  /// The handler for [SemanticsAction.paste].
+  ///
+  /// This is a request to paste the current content of the clipboard.
+  ///
+  /// TalkBack users on Android can trigger this action from the local context
+  /// menu of a text field, for example.
+  VoidCallback get onPaste => _onPaste;
+  VoidCallback _onPaste;
+  set onPaste(VoidCallback value) {
+    _addArgumentlessAction(SemanticsAction.paste, value);
+    _onPaste = value;
+  }
+
   /// The handler for [SemanticsAction.showOnScreen].
   ///
   /// A request to fully show the semantics node on screen. For example, this
@@ -1656,6 +1738,28 @@ class SemanticsConfiguration {
       value(extentSelection);
     });
     _onMoveCursorBackwardByCharacter = value;
+  }
+
+  /// The handler for [SemanticsAction.setSelection].
+  ///
+  /// This handler is invoked when the user either wants to change the currently
+  /// selected text in a text field or change the position of the cursor.
+  ///
+  /// TalkBack users can trigger this handler by selecting "Move cursor to
+  /// beginning/end" or "Select all" from the local context menu.
+  SetSelectionHandler get onSetSelection => _onSetSelection;
+  SetSelectionHandler _onSetSelection;
+  set onSetSelection(SetSelectionHandler value) {
+    assert(value != null);
+    _addAction(SemanticsAction.setSelection, (dynamic args) {
+      final Map<String, int> selection = args;
+      assert(selection != null && selection['base'] != null && selection['extent'] != null);
+      value(new TextSelection(
+        baseOffset: selection['base'],
+        extentOffset: selection['extent'],
+      ));
+    });
+    _onSetSelection = value;
   }
 
   /// Returns the action handler registered for [action] or null if none was
