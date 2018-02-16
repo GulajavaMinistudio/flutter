@@ -8,22 +8,14 @@ import 'dart:convert';
 import 'package:usage/uuid/uuid.dart';
 
 import 'artifacts.dart';
-import 'base/common.dart';
 import 'base/file_system.dart';
 import 'base/io.dart';
 import 'base/process_manager.dart';
+import 'dart/sdk.dart';
 import 'globals.dart';
 
 String _dartExecutable() {
-  final String engineDartSdkPath = artifacts.getArtifactPath(
-    Artifact.engineDartSdkPath
-  );
-  if (!fs.isDirectorySync(engineDartSdkPath)) {
-    throwToolExit('No dart sdk Flutter host engine build found at $engineDartSdkPath.\n'
-      'Note that corresponding host engine build is required even when targeting particular device platforms.',
-      exitCode: 2);
-  }
-  return fs.path.join(engineDartSdkPath, 'bin', 'dart');
+  return fs.path.join(dartSdkPath, 'bin', 'dart');
 }
 
 class _StdoutHandler {
@@ -58,6 +50,7 @@ class _StdoutHandler {
 Future<String> compile(
     {String sdkRoot,
     String mainPath,
+    String outputFilePath,
     bool linkPlatformKernelIn: false,
     bool aot: false,
     bool trackWidgetCreation: false,
@@ -90,6 +83,9 @@ Future<String> compile(
   }
   if (packagesPath != null) {
     command.addAll(<String>['--packages', packagesPath]);
+  }
+  if (outputFilePath != null) {
+    command.addAll(<String>['--output-dill', outputFilePath]);
   }
 
   if (extraFrontEndOptions != null)
@@ -140,13 +136,14 @@ class ResidentCompiler {
   /// into new binary.
   /// Binary file name is returned if compilation was successful, otherwise
   /// null is returned.
-  Future<String> recompile(String mainPath, List<String> invalidatedFiles) async {
+  Future<String> recompile(String mainPath, List<String> invalidatedFiles,
+      {String outputPath}) async {
     stdoutHandler.reset();
 
     // First time recompile is called we actually have to compile the app from
     // scratch ignoring list of invalidated files.
     if (_server == null)
-      return _compile(mainPath);
+      return _compile(mainPath, outputPath);
 
     final String inputKey = new Uuid().generateV4();
     _server.stdin.writeln('recompile $inputKey');
@@ -156,7 +153,7 @@ class ResidentCompiler {
     return stdoutHandler.outputFilename.future;
   }
 
-  Future<String> _compile(String scriptFilename) async {
+  Future<String> _compile(String scriptFilename, String outputPath) async {
     final String frontendServer = artifacts.getArtifactPath(
       Artifact.frontendServerSnapshotForEngineDartSdk
     );
@@ -168,6 +165,9 @@ class ResidentCompiler {
       '--incremental',
       '--strong'
     ];
+    if (outputPath != null) {
+      args.addAll(<String>['--output-dill', outputPath]);
+    }
     if (_trackWidgetCreation) {
       args.add('--track-widget-creation');
     }
