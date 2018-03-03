@@ -59,6 +59,7 @@ Future<String> compile(
     {String sdkRoot,
     String mainPath,
     String outputFilePath,
+    String depFilePath,
     bool linkPlatformKernelIn: false,
     bool aot: false,
     bool trackWidgetCreation: false,
@@ -78,6 +79,7 @@ Future<String> compile(
     '--sdk-root',
     sdkRoot,
     '--strong',
+    '--target=flutter',
   ];
   if (trackWidgetCreation)
     command.add('--track-widget-creation');
@@ -94,6 +96,9 @@ Future<String> compile(
   }
   if (outputFilePath != null) {
     command.addAll(<String>['--output-dill', outputFilePath]);
+  }
+  if (depFilePath != null) {
+    command.addAll(<String>['--depfile', depFilePath]);
   }
 
   if (extraFrontEndOptions != null)
@@ -175,7 +180,8 @@ class ResidentCompiler {
       '--sdk-root',
       _sdkRoot,
       '--incremental',
-      '--strong'
+      '--strong',
+      '--target=flutter',
     ];
     if (outputPath != null) {
       args.addAll(<String>['--output-dill', outputPath]);
