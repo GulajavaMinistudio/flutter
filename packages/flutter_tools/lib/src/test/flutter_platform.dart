@@ -8,7 +8,8 @@ import 'dart:convert';
 import 'package:meta/meta.dart';
 import 'package:stream_channel/stream_channel.dart';
 
-import 'package:test/src/backend/test_platform.dart'; // ignore: implementation_imports
+import 'package:test/src/backend/runtime.dart'; // ignore: implementation_imports
+import 'package:test/src/backend/suite_platform.dart'; // ignore: implementation_imports
 import 'package:test/src/runner/plugin/platform.dart'; // ignore: implementation_imports
 import 'package:test/src/runner/plugin/hack_register_platform.dart' as hack; // ignore: implementation_imports
 
@@ -61,13 +62,14 @@ void installHook({
   bool previewDart2: false,
   int port: 0,
   String precompiledDillPath,
+  bool trackWidgetCreation: false,
   int observatoryPort,
   InternetAddressType serverType: InternetAddressType.IP_V4,
 }) {
   if (startPaused || observatoryPort != null)
     assert(enableObservatory);
   hack.registerPlatformPlugin(
-    <TestPlatform>[TestPlatform.vm],
+    <Runtime>[Runtime.vm],
     () => new _FlutterPlatform(
       shellPath: shellPath,
       watcher: watcher,
@@ -79,6 +81,7 @@ void installHook({
       previewDart2: previewDart2,
       port: port,
       precompiledDillPath: precompiledDillPath,
+      trackWidgetCreation: trackWidgetCreation,
     ),
   );
 }
@@ -97,7 +100,7 @@ class _CompilationRequest {
 // This class is a wrapper around compiler that allows multiple isolates to
 // enqueue compilation requests, but ensures only one compilation at a time.
 class _Compiler {
-  _Compiler() {
+  _Compiler(bool trackWidgetCreation) {
     // Compiler maintains and updates single incremental dill file.
     // Incremental compilation requests done for each test copy that file away
     // for independent execution.
@@ -135,7 +138,8 @@ class _Compiler {
 
     compiler = new ResidentCompiler(
         artifacts.getArtifactPath(Artifact.flutterPatchedSdkPath),
-        packagesPath: PackageMap.globalPackagesPath);
+        packagesPath: PackageMap.globalPackagesPath,
+        trackWidgetCreation: trackWidgetCreation);
   }
 
   final StreamController<_CompilationRequest> compilerController =
@@ -162,6 +166,7 @@ class _FlutterPlatform extends PlatformPlugin {
     this.previewDart2,
     this.port,
     this.precompiledDillPath,
+    this.trackWidgetCreation,
   }) : assert(shellPath != null);
 
   final String shellPath;
@@ -174,6 +179,7 @@ class _FlutterPlatform extends PlatformPlugin {
   final bool previewDart2;
   final int port;
   final String precompiledDillPath;
+  final bool trackWidgetCreation;
 
   _Compiler compiler;
 
@@ -187,7 +193,7 @@ class _FlutterPlatform extends PlatformPlugin {
   int _testCount = 0;
 
   @override
-  StreamChannel<dynamic> loadChannel(String testPath, TestPlatform platform) {
+  StreamChannel<dynamic> loadChannel(String testPath, SuitePlatform platform) {
     if (_testCount > 0) {
       // Fail if there will be a port conflict.
       if (explicitObservatoryPort != null)
@@ -269,7 +275,7 @@ class _FlutterPlatform extends PlatformPlugin {
 
       if (previewDart2 && precompiledDillPath == null) {
         // Lazily instantiate compiler so it is built only if it is actually used.
-        compiler ??= new _Compiler();
+        compiler ??= new _Compiler(trackWidgetCreation);
         mainDart = await compiler.compile(mainDart);
 
         if (mainDart == null) {
