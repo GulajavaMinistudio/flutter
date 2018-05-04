@@ -52,8 +52,8 @@ const String _kProjectRootSentinel = 'pubspec.yaml';
 /// The address at which our WebSocket server resides and at which the sky_shell
 /// processes will host the Observatory server.
 final Map<InternetAddressType, InternetAddress> _kHosts = <InternetAddressType, InternetAddress>{
-  InternetAddressType.IP_V4: InternetAddress.LOOPBACK_IP_V4,
-  InternetAddressType.IP_V6: InternetAddress.LOOPBACK_IP_V6,
+  InternetAddressType.IP_V4: InternetAddress.LOOPBACK_IP_V4, // ignore: deprecated_member_use
+  InternetAddressType.IP_V6: InternetAddress.LOOPBACK_IP_V6, // ignore: deprecated_member_use
 };
 
 /// Configure the `test` package to work with Flutter.
@@ -73,7 +73,7 @@ void installHook({
   bool trackWidgetCreation: false,
   bool updateGoldens: false,
   int observatoryPort,
-  InternetAddressType serverType: InternetAddressType.IP_V4,
+  InternetAddressType serverType: InternetAddressType.IP_V4, // ignore: deprecated_member_use
 }) {
   assert(!enableObservatory || (!startPaused && observatoryPort == null));
   hack.registerPlatformPlugin(
@@ -622,7 +622,7 @@ class _FlutterPlatform extends PlatformPlugin {
   }
 
   String _getWebSocketUrl() {
-    return host.type == InternetAddressType.IP_V4
+    return host.type == InternetAddressType.IP_V4 // ignore: deprecated_member_use
         ? 'ws://${host.address}'
         : 'ws://[${host.address}]';
   }
@@ -766,7 +766,7 @@ void main() {
     } else {
       command.add('--disable-observatory');
     }
-    if (host.type == InternetAddressType.IP_V6)
+    if (host.type == InternetAddressType.IP_V6) // ignore: deprecated_member_use
       command.add('--ipv6');
     if (bundlePath != null) {
       command.add('--flutter-assets-dir=$bundlePath');
