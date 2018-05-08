@@ -52,6 +52,7 @@ class _FakeGenSnapshot implements GenSnapshot {
     SnapshotType snapshotType,
     String packagesPath,
     String depfilePath,
+    IOSArch iosArch,
     Iterable<String> additionalArgs,
   }) async {
     _callCount += 1;
@@ -338,6 +339,19 @@ void main() {
       ), isNot(equals(0)));
     }, overrides: contextOverrides);
 
+    testUsingContext('Android ARM debug AOT snapshot is invalid', () async {
+      final String outputPath = fs.path.join('build', 'foo');
+      expect(await snapshotter.build(
+        platform: TargetPlatform.android_arm,
+        buildMode: BuildMode.debug,
+        mainPath: 'main.dill',
+        packagesPath: '.packages',
+        outputPath: outputPath,
+        preferSharedLibrary: false,
+        previewDart2: true,
+      ), isNot(0));
+    }, overrides: contextOverrides);
+
     testUsingContext('builds iOS profile AOT snapshot', () async {
       fs.file('main.dill').writeAsStringSync('binary magic');
 
@@ -361,6 +375,7 @@ void main() {
         outputPath: outputPath,
         preferSharedLibrary: false,
         previewDart2: true,
+        iosArch: IOSArch.arm64,
       );
 
       expect(genSnapshotExitCode, 0);
@@ -407,6 +422,7 @@ void main() {
         outputPath: outputPath,
         preferSharedLibrary: false,
         previewDart2: true,
+        iosArch: IOSArch.arm64,
       );
 
       expect(genSnapshotExitCode, 0);
