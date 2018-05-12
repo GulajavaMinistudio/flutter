@@ -194,12 +194,6 @@ class AOTSnapshotter {
         '--strong',
       ]);
     }
-    if (buildMode != BuildMode.release) {
-      genSnapshotArgs.addAll(<String>[
-        '--no-checked',
-        '--conditional_directives',
-      ]);
-    }
     if (extraGenSnapshotOptions != null && extraGenSnapshotOptions.isNotEmpty) {
       printTrace('Extra gen_snapshot options: $extraGenSnapshotOptions');
       genSnapshotArgs.addAll(extraGenSnapshotOptions);
@@ -228,6 +222,11 @@ class AOTSnapshotter {
     }
 
     if (platform == TargetPlatform.android_arm || iosArch == IOSArch.armv7) {
+      // Use softfp for Android armv7 devices.
+      // Note that this is the default for armv7 iOS builds, but harmless to set.
+      // TODO(cbracken) eliminate this when we fix https://github.com/flutter/flutter/issues/17489
+      genSnapshotArgs.add('--no-sim-use-hardfp');
+
       // Not supported by the Pixel in 32-bit mode.
       genSnapshotArgs.add('--no-use-integer-division');
     }

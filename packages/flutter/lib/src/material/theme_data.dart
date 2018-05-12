@@ -5,6 +5,7 @@
 import 'dart:ui' show Color, hashValues;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 import 'button_theme.dart';
@@ -16,20 +17,7 @@ import 'input_decorator.dart';
 import 'slider_theme.dart';
 import 'typography.dart';
 
-/// Describes the contrast needs of a color.
-enum Brightness {
-  /// The color is dark and will require a light text color to achieve readable
-  /// contrast.
-  ///
-  /// For example, the color might be dark grey, requiring white text.
-  dark,
-
-  /// The color is light and will require a dark text color to achieve readable
-  /// contrast.
-  ///
-  /// For example, the color might be bright white, requiring black text.
-  light,
-}
+export 'package:flutter/services.dart' show Brightness;
 
 // Deriving these values is black magic. The spec claims that pressed buttons
 // have a highlight of 0x66999999, but that's clearly wrong. The videos in the
@@ -156,9 +144,12 @@ class ThemeData extends Diagnosticable {
     accentIconTheme ??= accentIsDark ? const IconThemeData(color: Colors.white) : const IconThemeData(color: Colors.black);
     platform ??= defaultTargetPlatform;
     final Typography typography = new Typography(platform: platform);
-    textTheme ??= isDark ? typography.white : typography.black;
-    primaryTextTheme ??= primaryIsDark ? typography.white : typography.black;
-    accentTextTheme ??= accentIsDark ? typography.white : typography.black;
+    final TextTheme defaultTextTheme = isDark ? typography.white : typography.black;
+    textTheme = defaultTextTheme.merge(textTheme);
+    final TextTheme defaultPrimaryTextTheme = primaryIsDark ? typography.white : typography.black;
+    primaryTextTheme = defaultPrimaryTextTheme.merge(primaryTextTheme);
+    final TextTheme defaultAccentTextTheme = accentIsDark ? typography.white : typography.black;
+    accentTextTheme = defaultAccentTextTheme.merge(accentTextTheme);
     if (fontFamily != null) {
       textTheme = textTheme.apply(fontFamily: fontFamily);
       primaryTextTheme = primaryTextTheme.apply(fontFamily: fontFamily);
