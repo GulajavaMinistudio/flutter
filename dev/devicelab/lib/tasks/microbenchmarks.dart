@@ -74,8 +74,6 @@ TaskFunction createMicrobenchmarkTask() {
     addDart1Results(await _runMicrobench(
         'lib/stocks/layout_bench.dart', previewDart2: false));
     addDart1Results(await _runMicrobench(
-        'lib/stocks/layout_bench.dart', previewDart2: false));
-    addDart1Results(await _runMicrobench(
         'lib/stocks/build_bench.dart', previewDart2: false));
     addDart1Results(await _runMicrobench(
         'lib/gestures/velocity_tracker_bench.dart', previewDart2: false));
@@ -130,8 +128,11 @@ Future<Map<String, double>> _readJsonResults(Process process) {
       process.kill(ProcessSignal.SIGINT); // flutter run doesn't quit automatically
       final String jsonOutput = jsonBuf.toString();
       try {
+        print('[DEBUG:DANTUP] Completing successfully');
         completer.complete(json.decode(jsonOutput));
+        print('[DEBUG:DANTUP] (done)');
       } catch (ex) {
+        print('[DEBUG:DANTUP] Decoding JSON failed ($ex). JSON string was: $jsonOutput');
         completer.completeError('Decoding JSON failed ($ex). JSON string was: $jsonOutput');
       }
       return;
@@ -141,10 +142,13 @@ Future<Map<String, double>> _readJsonResults(Process process) {
       jsonBuf.writeln(line.substring(line.indexOf(jsonPrefix) + jsonPrefix.length));
   });
 
-  process.exitCode.then<int>((int code) {
-    stdoutSub.cancel();
-    stderrSub.cancel();
+  process.exitCode.then<int>((int code) async {
+    await Future.wait<void>(<Future<void>>[
+      stdoutSub.cancel(),
+      stderrSub.cancel(),
+    ]);
     if (!processWasKilledIntentionally && code != 0) {
+      print('[DEBUG:DANTUP] Completing with failure due to exit code=$code');
       completer.completeError('flutter run failed: exit code=$code');
     }
   });
