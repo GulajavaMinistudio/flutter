@@ -187,7 +187,6 @@ class ThemeData extends Diagnosticable {
     errorColor ??= Colors.red[700];
     inputDecorationTheme ??= const InputDecorationTheme();
     pageTransitionsTheme ??= const PageTransitionsTheme();
-  tabBarTheme ??= const TabBarTheme();
     primaryIconTheme ??= primaryIsDark ? const IconThemeData(color: Colors.white) : const IconThemeData(color: Colors.black);
     accentIconTheme ??= accentIsDark ? const IconThemeData(color: Colors.white) : const IconThemeData(color: Colors.black);
     iconTheme ??= isDark ? const IconThemeData(color: Colors.white) : const IconThemeData(color: Colors.black87);
@@ -731,8 +730,6 @@ class ThemeData extends Diagnosticable {
   /// Linearly interpolate between two themes.
   ///
   /// {@template flutter.material.themeData.lerp}
-  /// The arguments must not be null.
-  ///
   /// The `t` argument represents position on the timeline, with 0.0 meaning
   /// that the interpolation has not started, returning `a` (or something
   /// equivalent to `a`), 1.0 meaning that the interpolation has finished,
@@ -894,12 +891,12 @@ class ThemeData extends Diagnosticable {
         primaryIconTheme,
         accentIconTheme,
         sliderTheme,
-        chipTheme,
+        tabBarTheme,
         hashValues(
+          chipTheme,
           platform,
           materialTapTargetSize,
           pageTransitionsTheme,
-          tabBarTheme,
         ),
       ),
     );
