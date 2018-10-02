@@ -173,6 +173,18 @@ abstract class CupertinoLocalizations {
   /// This function will deal with pluralization based on the `second` parameter.
   String timerPickerSecondLabel(int second);
 
+  /// The term used for cutting
+  String get cutButtonLabel;
+
+  /// The term used for copying
+  String get copyButtonLabel;
+
+  /// The term used for pasting
+  String get pasteButtonLabel;
+
+  /// The term used for selecting everything
+  String get selectAllButtonLabel;
+
   /// The `CupertinoLocalizations` from the closest [Localizations] instance
   /// that encloses the given context.
   ///
@@ -252,6 +264,8 @@ class DefaultCupertinoLocalizations implements CupertinoLocalizations {
     'December',
   ];
 
+
+
   @override
   String datePickerYear(int yearIndex) => yearIndex.toString();
 
@@ -316,6 +330,18 @@ class DefaultCupertinoLocalizations implements CupertinoLocalizations {
 
   @override
   String timerPickerSecondLabel(int second) => 'sec';
+
+  @override
+  String get cutButtonLabel => 'Cut';
+
+  @override
+  String get copyButtonLabel => 'Copy';
+
+  @override
+  String get pasteButtonLabel => 'Paste';
+
+  @override
+  String get selectAllButtonLabel => 'Select All';
 
   /// Creates an object that provides US English resource values for the
   /// cupertino library widgets.
