@@ -97,28 +97,6 @@ enum Brightness {
 ///
 /// Used by [SystemChrome.setSystemUIOverlayStyle].
 class SystemUiOverlayStyle {
-  /// System overlays should be drawn with a light color. Intended for
-  /// applications with a dark background.
-  static const SystemUiOverlayStyle light = SystemUiOverlayStyle(
-    systemNavigationBarColor: Color(0xFF000000),
-    systemNavigationBarDividerColor: null,
-    statusBarColor: null,
-    systemNavigationBarIconBrightness: Brightness.light,
-    statusBarIconBrightness: Brightness.light,
-    statusBarBrightness: Brightness.dark,
-  );
-
-  /// System overlays should be drawn with a dark color. Intended for
-  /// applications with a light background.
-  static const SystemUiOverlayStyle dark = SystemUiOverlayStyle(
-    systemNavigationBarColor: Color(0xFF000000),
-    systemNavigationBarDividerColor: null,
-    statusBarColor: null,
-    systemNavigationBarIconBrightness: Brightness.light,
-    statusBarIconBrightness: Brightness.dark,
-    statusBarBrightness: Brightness.light,
-  );
-
   /// Creates a new [SystemUiOverlayStyle].
   const SystemUiOverlayStyle({
     this.systemNavigationBarColor,
@@ -158,6 +136,28 @@ class SystemUiOverlayStyle {
   ///
   /// Only honored in Android version M and greater.
   final Brightness statusBarIconBrightness;
+
+  /// System overlays should be drawn with a light color. Intended for
+  /// applications with a dark background.
+  static const SystemUiOverlayStyle light = SystemUiOverlayStyle(
+    systemNavigationBarColor: Color(0xFF000000),
+    systemNavigationBarDividerColor: null,
+    statusBarColor: null,
+    systemNavigationBarIconBrightness: Brightness.light,
+    statusBarIconBrightness: Brightness.light,
+    statusBarBrightness: Brightness.dark,
+  );
+
+  /// System overlays should be drawn with a dark color. Intended for
+  /// applications with a light background.
+  static const SystemUiOverlayStyle dark = SystemUiOverlayStyle(
+    systemNavigationBarColor: Color(0xFF000000),
+    systemNavigationBarDividerColor: null,
+    statusBarColor: null,
+    systemNavigationBarIconBrightness: Brightness.light,
+    statusBarIconBrightness: Brightness.dark,
+    statusBarBrightness: Brightness.light,
+  );
 
   /// Convert this event to a map for serialization.
   Map<String, dynamic> _toMap() {
@@ -237,7 +237,7 @@ class SystemChrome {
   /// The `orientation` argument is a list of [DeviceOrientation] enum values.
   /// The empty list causes the application to defer to the operating system
   /// default.
-  static Future<Null> setPreferredOrientations(List<DeviceOrientation> orientations) async {
+  static Future<void> setPreferredOrientations(List<DeviceOrientation> orientations) async {
     await SystemChannels.platform.invokeMethod(
       'SystemChrome.setPreferredOrientations',
       _stringify(orientations),
@@ -249,7 +249,7 @@ class SystemChrome {
   ///
   /// Any part of the description that is unsupported on the current platform
   /// will be ignored.
-  static Future<Null> setApplicationSwitcherDescription(ApplicationSwitcherDescription description) async {
+  static Future<void> setApplicationSwitcherDescription(ApplicationSwitcherDescription description) async {
     await SystemChannels.platform.invokeMethod(
       'SystemChrome.setApplicationSwitcherDescription',
       <String, dynamic>{
@@ -281,7 +281,7 @@ class SystemChrome {
   /// after a delay of 1 second. This can be achieved through [restoreSystemUIOverlays]
   /// or calling this again. Otherwise, the original UI overlay settings will be
   /// automatically restored only when the application loses and regains focus.
-  static Future<Null> setEnabledSystemUIOverlays(List<SystemUiOverlay> overlays) async {
+  static Future<void> setEnabledSystemUIOverlays(List<SystemUiOverlay> overlays) async {
     await SystemChannels.platform.invokeMethod(
       'SystemChrome.setEnabledSystemUIOverlays',
       _stringify(overlays),
@@ -297,7 +297,7 @@ class SystemChrome {
   ///
   /// On Android, the system UI cannot be changed until 1 second after the previous
   /// change. This is to prevent malware from permanently hiding navigation buttons.
-  static Future<Null> restoreSystemUIOverlays() async {
+  static Future<void> restoreSystemUIOverlays() async {
     await SystemChannels.platform.invokeMethod(
       'SystemChrome.restoreSystemUIOverlays',
       null,
