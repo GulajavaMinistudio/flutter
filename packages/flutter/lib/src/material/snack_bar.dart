@@ -155,6 +155,7 @@ class SnackBar extends StatelessWidget {
     this.duration = _kSnackBarDisplayDuration,
     this.animation,
   }) : assert(content != null),
+       assert(duration != null),
        super(key: key);
 
   /// The primary content of the snack bar.
@@ -212,7 +213,6 @@ class SnackBar extends StatelessWidget {
     ];
     if (action != null) {
       children.add(ButtonTheme.bar(
-        colorScheme: theme.colorScheme,
         padding: const EdgeInsets.symmetric(horizontal: _kSnackBarPadding),
         textTheme: ButtonTextTheme.accent,
         child: action,
