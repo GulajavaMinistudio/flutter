@@ -121,6 +121,7 @@ example:org-dartlang-app:/
               'result abc\nline1\nline2\nabc\nabc /path/to/main.dart.dill 0'
             ))
           ));
+      final KernelCompiler kernelCompiler = await kernelCompilerFactory.create(null);
       final CompilerOutput output = await kernelCompiler.compile(sdkRoot: '/path/to/sdkroot',
         mainPath: '/path/to/main.dart',
         trackWidgetCreation: false,
@@ -144,6 +145,7 @@ example:org-dartlang-app:/
               'result abc\nline1\nline2\nabc\nabc'
             ))
           ));
+      final KernelCompiler kernelCompiler = await kernelCompilerFactory.create(null);
       final CompilerOutput output = await kernelCompiler.compile(sdkRoot: '/path/to/sdkroot',
         mainPath: '/path/to/main.dart',
         trackWidgetCreation: false,
@@ -169,6 +171,7 @@ example:org-dartlang-app:/
               'result abc\nline1\nline2\nabc\nabc'
           ))
       ));
+      final KernelCompiler kernelCompiler = await kernelCompilerFactory.create(null);
       final CompilerOutput output = await kernelCompiler.compile(
         sdkRoot: '/path/to/sdkroot',
         mainPath: '/path/to/main.dart',
@@ -517,7 +520,7 @@ Future<void> _recompile(
   });
   final CompilerOutput output = await generator.recompile(
     null /* mainPath */,
-    <String>['/path/to/main.dart'],
+    <Uri>[Uri.parse('/path/to/main.dart')],
     outputPath: '/build/',
   );
   expect(output.outputFilename, equals('/path/to/main.dart.dill'));

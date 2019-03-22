@@ -17,12 +17,24 @@ import 'base/platform.dart';
 import 'base/process_manager.dart';
 import 'base/terminal.dart';
 import 'cache.dart';
+import 'codegen.dart';
 import 'convert.dart';
 import 'dart/package_map.dart';
 import 'globals.dart';
 import 'project.dart';
 
-KernelCompiler get kernelCompiler => context[KernelCompiler];
+KernelCompilerFactory get kernelCompilerFactory => context[KernelCompilerFactory];
+
+class KernelCompilerFactory {
+  const KernelCompilerFactory();
+
+  Future<KernelCompiler> create(FlutterProject flutterProject) async {
+    if (flutterProject == null || !flutterProject.hasBuilders) {
+      return const KernelCompiler();
+    }
+    return const CodeGeneratingKernelCompiler();
+  }
+}
 
 typedef CompilerMessageConsumer = void Function(String message, { bool emphasis, TerminalColor color });
 
@@ -235,7 +247,7 @@ class KernelCompiler {
           'trackWidgetCreation': trackWidgetCreation.toString(),
           'linkPlatformKernelIn': linkPlatformKernelIn.toString(),
           'engineHash': engine.version,
-          'buildersUsed': '${flutterProject != null ? await flutterProject.hasBuilders : false}',
+          'buildersUsed': '${flutterProject != null ? flutterProject.hasBuilders : false}',
         },
         depfilePaths: <String>[depFilePath],
         pathFilter: (String path) => !path.startsWith('/b/build/slave/'),
@@ -354,7 +366,7 @@ class _RecompileRequest extends _CompilationRequest {
   ) : super(completer);
 
   String mainPath;
-  List<String> invalidatedFiles;
+  List<Uri> invalidatedFiles;
   String outputPath;
   String packagesFilePath;
 
@@ -450,7 +462,7 @@ class ResidentCompiler {
   /// null is returned.
   Future<CompilerOutput> recompile(
     String mainPath,
-    List<String> invalidatedFiles, {
+    List<Uri> invalidatedFiles, {
     @required String outputPath,
     String packagesFilePath,
   }) async {
@@ -497,9 +509,9 @@ class ResidentCompiler {
         : '';
     _server.stdin.writeln('recompile $mainUri$inputKey');
     printTrace('<- recompile $mainUri$inputKey');
-    for (String fileUri in request.invalidatedFiles) {
-      _server.stdin.writeln(_mapFileUri(fileUri, packageUriMapper));
-      printTrace('<- ${_mapFileUri(fileUri, packageUriMapper)}');
+    for (Uri fileUri in request.invalidatedFiles) {
+      _server.stdin.writeln(_mapFileUri(fileUri.toString(), packageUriMapper));
+      printTrace('<- ${_mapFileUri(fileUri.toString(), packageUriMapper)}');
     }
     _server.stdin.writeln(inputKey);
     printTrace('<- $inputKey');

@@ -104,7 +104,6 @@ void main() {
       bundle: anyNamed('bundle'),
       firstBuildTime: anyNamed('firstBuildTime'),
       bundleFirstUpload: anyNamed('bundleFirstUpload'),
-      bundleDirty: anyNamed('bundleDirty'),
       generator: anyNamed('generator'),
       fullRestart: anyNamed('fullRestart'),
       dillOutputPath: anyNamed('dillOutputPath'),
@@ -116,6 +115,8 @@ void main() {
         UpdateFSReport(success: true, syncedBytes: 1000, invalidatedSourcesCount: 1)));
     when(mockDevFs.assetPathsToEvict).thenReturn(<String>{});
     when(mockDevFs.baseUri).thenReturn(Uri.file('test'));
+    when(mockDevFs.sources).thenReturn(<Uri>[Uri.file('test')]);
+    when(mockDevFs.lastCompiled).thenReturn(DateTime.now());
 
     setUp(() {
       mockArtifacts = MockLocalEngineArtifacts();
