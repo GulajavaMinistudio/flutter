@@ -13,6 +13,7 @@ import 'app_bar_theme.dart';
 import 'banner_theme.dart';
 import 'bottom_app_bar_theme.dart';
 import 'bottom_sheet_theme.dart';
+import 'button_bar_theme.dart';
 import 'button_theme.dart';
 import 'card_theme.dart';
 import 'chip_theme.dart';
@@ -180,6 +181,7 @@ class ThemeData extends Diagnosticable {
     PopupMenuThemeData popupMenuTheme,
     MaterialBannerThemeData bannerTheme,
     DividerThemeData dividerTheme,
+    ButtonBarThemeData buttonBarTheme,
   }) {
     brightness ??= Brightness.light;
     final bool isDark = brightness == Brightness.dark;
@@ -285,6 +287,7 @@ class ThemeData extends Diagnosticable {
     popupMenuTheme ??= const PopupMenuThemeData();
     bannerTheme ??= const MaterialBannerThemeData();
     dividerTheme ??= const DividerThemeData();
+    buttonBarTheme ??= const ButtonBarThemeData();
 
     return ThemeData.raw(
       brightness: brightness,
@@ -348,6 +351,7 @@ class ThemeData extends Diagnosticable {
       popupMenuTheme: popupMenuTheme,
       bannerTheme: bannerTheme,
       dividerTheme: dividerTheme,
+      buttonBarTheme: buttonBarTheme,
     );
   }
 
@@ -423,6 +427,7 @@ class ThemeData extends Diagnosticable {
     @required this.popupMenuTheme,
     @required this.bannerTheme,
     @required this.dividerTheme,
+    @required this.buttonBarTheme,
   }) : assert(brightness != null),
        assert(primaryColor != null),
        assert(primaryColorBrightness != null),
@@ -480,7 +485,8 @@ class ThemeData extends Diagnosticable {
        assert(bottomSheetTheme != null),
        assert(popupMenuTheme != null),
        assert(bannerTheme != null),
-       assert(dividerTheme != null);
+       assert(dividerTheme != null),
+       assert(buttonBarTheme != null);
 
   /// Create a [ThemeData] based on the colors in the given [colorScheme] and
   /// text styles of the optional [textTheme].
@@ -768,14 +774,26 @@ class ThemeData extends Diagnosticable {
 
   /// The platform the material widgets should adapt to target.
   ///
-  /// Defaults to the current platform. This should be used in order to style UI
-  /// elements according to platform conventions.
+  /// Defaults to the current platform, as exposed by [defaultTargetPlatform].
+  /// This should be used in order to style UI elements according to platform
+  /// conventions.
   ///
-  /// [Platform.defaultTargetPlatform] should be used directly instead only in
-  /// rare cases where it's necessary to determine behavior based on the
-  /// platform. [dart.io.Platform.environment] should be used when it's critical
+  /// Widgets from the material library should use this getter (via [Theme.of])
+  /// to determine the current platform for the purpose of emulating the
+  /// platform behavior (e.g. scrolling or haptic effects). Widgets and render
+  /// objects at lower layers that try to emulate the underlying platform
+  /// platform can depend on [defaultTargetPlatform] directly, or may require
+  /// that the target platform be provided as an argument. The
+  /// [dart.io.Platform] object should only be used directly when it's critical
   /// to actually know the current platform, without any overrides possible (for
   /// example, when a system API is about to be called).
+  ///
+  /// In a test environment, the platform returned is [TargetPlatform.android]
+  /// regardless of the host platform. (Android was chosen because the tests
+  /// were originally written assuming Android-like behavior, and we added
+  /// platform adaptations for iOS later). Tests can check iOS behavior by
+  /// setting the [platform] of the [Theme] explicitly to [TargetPlatform.iOS],
+  /// or by setting [debugDefaultTargetPlatformOverride].
   final TargetPlatform platform;
 
   /// Configures the hit test size of certain Material widgets.
@@ -877,6 +895,9 @@ class ThemeData extends Diagnosticable {
   /// [VerticalDivider]s, etc.
   final DividerThemeData dividerTheme;
 
+  /// A theme for customizing the appearance and layout of [ButtonBar] widgets.
+  final ButtonBarThemeData buttonBarTheme;
+
   /// Creates a copy of this theme but with the given fields replaced with the new values.
   ThemeData copyWith({
     Brightness brightness,
@@ -940,6 +961,7 @@ class ThemeData extends Diagnosticable {
     PopupMenuThemeData popupMenuTheme,
     MaterialBannerThemeData bannerTheme,
     DividerThemeData dividerTheme,
+    ButtonBarThemeData buttonBarTheme,
   }) {
     cupertinoOverrideTheme = cupertinoOverrideTheme?.noDefault();
     return ThemeData.raw(
@@ -1004,6 +1026,7 @@ class ThemeData extends Diagnosticable {
       popupMenuTheme: popupMenuTheme ?? this.popupMenuTheme,
       bannerTheme: bannerTheme ?? this.bannerTheme,
       dividerTheme: dividerTheme ?? this.dividerTheme,
+      buttonBarTheme: buttonBarTheme ?? this.buttonBarTheme,
     );
   }
 
@@ -1146,6 +1169,7 @@ class ThemeData extends Diagnosticable {
       popupMenuTheme: PopupMenuThemeData.lerp(a.popupMenuTheme, b.popupMenuTheme, t),
       bannerTheme: MaterialBannerThemeData.lerp(a.bannerTheme, b.bannerTheme, t),
       dividerTheme: DividerThemeData.lerp(a.dividerTheme, b.dividerTheme, t),
+      buttonBarTheme: ButtonBarThemeData.lerp(a.buttonBarTheme, b.buttonBarTheme, t),
     );
   }
 
@@ -1215,7 +1239,8 @@ class ThemeData extends Diagnosticable {
            (otherData.bottomSheetTheme == bottomSheetTheme) &&
            (otherData.popupMenuTheme == popupMenuTheme) &&
            (otherData.bannerTheme == bannerTheme) &&
-           (otherData.dividerTheme == dividerTheme);
+           (otherData.dividerTheme == dividerTheme) &&
+           (otherData.buttonBarTheme == buttonBarTheme);
   }
 
   @override
@@ -1285,6 +1310,7 @@ class ThemeData extends Diagnosticable {
       popupMenuTheme,
       bannerTheme,
       dividerTheme,
+      buttonBarTheme,
     ];
     return hashList(values);
   }
@@ -1351,6 +1377,7 @@ class ThemeData extends Diagnosticable {
     properties.add(DiagnosticsProperty<PopupMenuThemeData>('popupMenuTheme', popupMenuTheme, defaultValue: defaultData.popupMenuTheme));
     properties.add(DiagnosticsProperty<MaterialBannerThemeData>('bannerTheme', bannerTheme, defaultValue: defaultData.bannerTheme));
     properties.add(DiagnosticsProperty<DividerThemeData>('dividerTheme', dividerTheme, defaultValue: defaultData.dividerTheme));
+    properties.add(DiagnosticsProperty<ButtonBarThemeData>('buttonBarTheme', buttonBarTheme, defaultValue: defaultData.buttonBarTheme));
   }
 }
 
