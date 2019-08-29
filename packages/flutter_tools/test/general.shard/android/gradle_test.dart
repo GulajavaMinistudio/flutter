@@ -3,13 +3,17 @@
 // found in the LICENSE file.
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:file/memory.dart';
+import 'package:flutter_tools/src/android/android_sdk.dart';
+import 'package:flutter_tools/src/android/android_studio.dart';
 import 'package:flutter_tools/src/android/gradle.dart';
 import 'package:flutter_tools/src/base/logger.dart';
 import 'package:flutter_tools/src/artifacts.dart';
 import 'package:flutter_tools/src/base/common.dart';
 import 'package:flutter_tools/src/base/file_system.dart';
+import 'package:flutter_tools/src/base/os.dart';
 import 'package:flutter_tools/src/build_info.dart';
 import 'package:flutter_tools/src/cache.dart';
 import 'package:flutter_tools/src/ios/xcodeproj.dart';
@@ -20,6 +24,7 @@ import 'package:process/process.dart';
 
 import '../../src/common.dart';
 import '../../src/context.dart';
+import '../../src/mocks.dart';
 import '../../src/pubspec_schema.dart';
 
 void main() {
@@ -843,6 +848,235 @@ flutter:
           throwsA(predicate<Exception>((Exception e) => e is ToolExit)));
     });
   });
+
+  group('injectGradleWrapperIfNeeded', () {
+    MemoryFileSystem memoryFileSystem;
+    Directory tempDir;
+    Directory gradleWrapperDirectory;
+
+    setUp(() {
+      memoryFileSystem = MemoryFileSystem();
+      tempDir = memoryFileSystem.systemTempDirectory.createTempSync('artifacts_test.');
+      gradleWrapperDirectory = memoryFileSystem.directory(
+          memoryFileSystem.path.join(tempDir.path, 'bin', 'cache', 'artifacts', 'gradle_wrapper'));
+      gradleWrapperDirectory.createSync(recursive: true);
+      gradleWrapperDirectory
+        .childFile('gradlew')
+        .writeAsStringSync('irrelevant');
+      gradleWrapperDirectory
+        .childDirectory('gradle')
+        .childDirectory('wrapper')
+        .createSync(recursive: true);
+      gradleWrapperDirectory
+        .childDirectory('gradle')
+        .childDirectory('wrapper')
+        .childFile('gradle-wrapper.jar')
+        .writeAsStringSync('irrelevant');
+    });
+
+    testUsingContext('Inject the wrapper when all files are missing', () {
+      final Directory sampleAppAndroid = fs.directory('/sample-app/android');
+      sampleAppAndroid.createSync(recursive: true);
+
+      injectGradleWrapperIfNeeded(sampleAppAndroid);
+
+      expect(sampleAppAndroid.childFile('gradlew').existsSync(), isTrue);
+
+      expect(sampleAppAndroid
+        .childDirectory('gradle')
+        .childDirectory('wrapper')
+        .childFile('gradle-wrapper.jar')
+        .existsSync(), isTrue);
+
+      expect(sampleAppAndroid
+        .childDirectory('gradle')
+        .childDirectory('wrapper')
+        .childFile('gradle-wrapper.properties')
+        .existsSync(), isTrue);
+
+      expect(sampleAppAndroid
+        .childDirectory('gradle')
+        .childDirectory('wrapper')
+        .childFile('gradle-wrapper.properties')
+        .readAsStringSync(),
+            'distributionBase=GRADLE_USER_HOME\n'
+            'distributionPath=wrapper/dists\n'
+            'zipStoreBase=GRADLE_USER_HOME\n'
+            'zipStorePath=wrapper/dists\n'
+            'distributionUrl=https\\://services.gradle.org/distributions/gradle-4.10.2-all.zip\n');
+    }, overrides: <Type, Generator>{
+      Cache: () => Cache(rootOverride: tempDir),
+      FileSystem: () => memoryFileSystem,
+    });
+
+    testUsingContext('Inject the wrapper when some files are missing', () {
+      final Directory sampleAppAndroid = fs.directory('/sample-app/android');
+      sampleAppAndroid.createSync(recursive: true);
+
+      // There's an existing gradlew
+      sampleAppAndroid.childFile('gradlew').writeAsStringSync('existing gradlew');
+
+      injectGradleWrapperIfNeeded(sampleAppAndroid);
+
+      expect(sampleAppAndroid.childFile('gradlew').existsSync(), isTrue);
+      expect(sampleAppAndroid.childFile('gradlew').readAsStringSync(),
+          equals('existing gradlew'));
+
+      expect(sampleAppAndroid
+        .childDirectory('gradle')
+        .childDirectory('wrapper')
+        .childFile('gradle-wrapper.jar')
+        .existsSync(), isTrue);
+
+      expect(sampleAppAndroid
+        .childDirectory('gradle')
+        .childDirectory('wrapper')
+        .childFile('gradle-wrapper.properties')
+        .existsSync(), isTrue);
+
+      expect(sampleAppAndroid
+        .childDirectory('gradle')
+        .childDirectory('wrapper')
+        .childFile('gradle-wrapper.properties')
+        .readAsStringSync(),
+            'distributionBase=GRADLE_USER_HOME\n'
+            'distributionPath=wrapper/dists\n'
+            'zipStoreBase=GRADLE_USER_HOME\n'
+            'zipStorePath=wrapper/dists\n'
+            'distributionUrl=https\\://services.gradle.org/distributions/gradle-4.10.2-all.zip\n');
+    }, overrides: <Type, Generator>{
+      Cache: () => Cache(rootOverride: tempDir),
+      FileSystem: () => memoryFileSystem,
+    });
+
+    testUsingContext('Gives executable permission to gradle', () {
+      final Directory sampleAppAndroid = fs.directory('/sample-app/android');
+      sampleAppAndroid.createSync(recursive: true);
+
+      // Make gradlew in the wrapper executable.
+      os.makeExecutable(gradleWrapperDirectory.childFile('gradlew'));
+
+      injectGradleWrapperIfNeeded(sampleAppAndroid);
+
+      final File gradlew = sampleAppAndroid.childFile('gradlew');
+      expect(gradlew.existsSync(), isTrue);
+      expect(gradlew.statSync().modeString().contains('x'), isTrue);
+    }, overrides: <Type, Generator>{
+      Cache: () => Cache(rootOverride: tempDir),
+      FileSystem: () => memoryFileSystem,
+      OperatingSystemUtils: () => OperatingSystemUtils(),
+    });
+  });
+
+  group('gradle build', () {
+    MockAndroidSdk mockAndroidSdk;
+    MockAndroidStudio mockAndroidStudio;
+    MockLocalEngineArtifacts mockArtifacts;
+    MockProcessManager mockProcessManager;
+    FakePlatform android;
+    FileSystem fs;
+    Cache cache;
+
+    setUp(() {
+      fs = MemoryFileSystem();
+      mockAndroidSdk = MockAndroidSdk();
+      mockAndroidStudio = MockAndroidStudio();
+      mockArtifacts = MockLocalEngineArtifacts();
+      mockProcessManager = MockProcessManager();
+      android = fakePlatform('android');
+
+      final Directory tempDir = fs.systemTempDirectory.createTempSync('artifacts_test.');
+      cache = Cache(rootOverride: tempDir);
+
+      final Directory gradleWrapperDirectory = tempDir
+          .childDirectory('bin')
+          .childDirectory('cache')
+          .childDirectory('artifacts')
+          .childDirectory('gradle_wrapper');
+      gradleWrapperDirectory.createSync(recursive: true);
+      gradleWrapperDirectory
+          .childFile('gradlew')
+          .writeAsStringSync('irrelevant');
+      gradleWrapperDirectory
+        .childDirectory('gradle')
+        .childDirectory('wrapper')
+        .createSync(recursive: true);
+      gradleWrapperDirectory
+        .childDirectory('gradle')
+        .childDirectory('wrapper')
+        .childFile('gradle-wrapper.jar')
+        .writeAsStringSync('irrelevant');
+    });
+
+    testUsingContext('build aar uses selected local engine', () async {
+      when(mockArtifacts.getArtifactPath(Artifact.flutterFramework,
+          platform: TargetPlatform.android_arm, mode: anyNamed('mode'))).thenReturn('engine');
+      when(mockArtifacts.engineOutPath).thenReturn(fs.path.join('out', 'android_arm'));
+
+      final File manifestFile = fs.file('path/to/project/pubspec.yaml');
+      manifestFile.createSync(recursive: true);
+      manifestFile.writeAsStringSync('''
+        name: test
+        version: 1.0.0+1
+        dependencies:
+          flutter:
+            sdk: flutter
+        flutter:
+          module:
+            androidX: false
+            androidPackage: com.example.test
+            iosBundleIdentifier: com.example.test
+        '''
+      );
+
+      final File gradlew = fs.file('path/to/project/.android/gradlew');
+      gradlew.createSync(recursive: true);
+
+      when(mockProcessManager.run(
+          <String> ['/path/to/project/.android/gradlew', '-v'],
+          workingDirectory: anyNamed('workingDirectory'),
+          environment: anyNamed('environment'),
+      )).thenAnswer(
+          (_) async => ProcessResult(1, 0, '5.1.1', ''),
+      );
+
+      // write schemaData otherwise pubspec.yaml file can't be loaded
+      writeEmptySchemaFile(fs);
+      fs.currentDirectory = 'path/to/project';
+
+      // Let any process start. Assert after.
+      when(mockProcessManager.start(
+        any,
+        environment: anyNamed('environment'),
+        workingDirectory: anyNamed('workingDirectory'))
+      ).thenAnswer((Invocation invocation) => Future<Process>.value(MockProcess()));
+      fs.directory('build/outputs/repo').createSync(recursive: true);
+
+      await buildGradleAar(
+        androidBuildInfo: const AndroidBuildInfo(BuildInfo(BuildMode.release, null)),
+        project: FlutterProject.current(),
+        outputDir: 'build/',
+        target: ''
+      );
+
+      final List<String> actualGradlewCall = verify(mockProcessManager.start(
+        captureAny,
+        environment: anyNamed('environment'),
+        workingDirectory: anyNamed('workingDirectory')),
+      ).captured.single;
+
+      expect(actualGradlewCall, contains('/path/to/project/.android/gradlew'));
+      expect(actualGradlewCall, contains('-PlocalEngineOut=out/android_arm'));
+    }, overrides: <Type, Generator>{
+        AndroidSdk: () => mockAndroidSdk,
+        AndroidStudio: () => mockAndroidStudio,
+        Artifacts: () => mockArtifacts,
+        Cache: () => cache,
+        ProcessManager: () => mockProcessManager,
+        Platform: () => android,
+        FileSystem: () => fs,
+      });
+  });
 }
 
 /// Generates a fake app bundle at the location [directoryName]/[fileName].
@@ -864,3 +1098,5 @@ class MockLocalEngineArtifacts extends Mock implements LocalEngineArtifacts {}
 class MockProcessManager extends Mock implements ProcessManager {}
 class MockXcodeProjectInterpreter extends Mock implements XcodeProjectInterpreter {}
 class MockGradleProject extends Mock implements GradleProject {}
+class MockitoAndroidSdk extends Mock implements AndroidSdk {}
+class MockAndroidStudio extends Mock implements AndroidStudio {}
