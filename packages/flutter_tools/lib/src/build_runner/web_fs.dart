@@ -90,6 +90,7 @@ class WebFs {
   final Dwds _dwds;
   final Chrome _chrome;
   final BuildDaemonClient _client;
+  StreamSubscription<void> _connectedApps;
 
   static const String _kHostName = 'localhost';
 
@@ -98,13 +99,20 @@ class WebFs {
     await _dwds.stop();
     await _server.close(force: true);
     await _chrome.close();
+    await _connectedApps?.cancel();
   }
 
   /// Retrieve the [DebugConnection] for the current application.
   Future<DebugConnection> runAndDebug() async {
-    final AppConnection appConnection = await _dwds.connectedApps.first;
-    appConnection.runMain();
-    return _dwds.debugConnection(appConnection);
+    final Completer<DebugConnection> firstConnection = Completer<DebugConnection>();
+    _connectedApps =  _dwds.connectedApps.listen((AppConnection appConnection) async {
+      appConnection.runMain();
+      final DebugConnection debugConnection = await _dwds.debugConnection(appConnection);
+      if (!firstConnection.isCompleted) {
+        firstConnection.complete(debugConnection);
+      }
+    });
+    return firstConnection.future;
   }
 
   /// Perform a hard refresh of all connected browser tabs.
@@ -121,12 +129,6 @@ class WebFs {
 
   /// Recompile the web application and return whether this was successful.
   Future<bool> recompile() async {
-    // TODO(jonahwilliams): build_daemon is still watching for sources, which means we can
-    // easily miss changes when hot restart is triggered by IDEs. Until we fix this, add a
-    // delay to allow filesystem watches to gather all required source files. This duration
-    // was chosen arbitrarily.
-    // See https://github.com/flutter/flutter/issues/39696
-    await Future<void>.delayed(const Duration(milliseconds: 150));
     _client.startBuild();
     await for (BuildResults results in _client.buildResults) {
       final BuildResult result = results.results.firstWhere((BuildResult result) {
@@ -262,7 +264,7 @@ class WebFs {
         return Response.ok(file.readAsBytesSync(), headers: <String, String>{
           'Content-Type': 'text/javascript',
         });
-      } else if (request.url.path.contains('dart_sdk')) {
+      } else if (request.url.path.endsWith('dart_sdk.js')) {
         final File file = fs.file(fs.path.join(
           artifacts.getArtifactPath(Artifact.flutterWebSdk),
           'kernel',
@@ -272,12 +274,29 @@ class WebFs {
         return Response.ok(file.readAsBytesSync(), headers: <String, String>{
           'Content-Type': 'text/javascript',
         });
+      } else if (request.url.path.endsWith('dart_sdk.js.map')) {
+        final File file = fs.file(fs.path.join(
+          artifacts.getArtifactPath(Artifact.flutterWebSdk),
+          'kernel',
+          'amd',
+          'dart_sdk.js.map',
+        ));
+        return Response.ok(file.readAsBytesSync());
       } else if (request.url.path.endsWith('.dart')) {
         // This is likely a sourcemap request. The first segment is the
         // package name, and the rest is the path to the file relative to
         // the package uri. For example, `foo/bar.dart` would represent a
         // file at a path like `foo/lib/bar.dart`. If there is no leading
         // segment, then we assume it is from the current package.
+
+        // Handle sdk requests that have mangled urls from engine build.
+        if (request.url.path.contains('flutter_web_sdk')) {
+          // Note: the request is a uri and not a file path, so they always use `/`.
+          final String sdkPath = fs.path.joinAll(request.url.path.split('flutter_web_sdk/').last.split('/'));
+          final String webSdkPath = artifacts.getArtifactPath(Artifact.flutterWebSdk);
+          return Response.ok(fs.file(fs.path.join(webSdkPath, sdkPath)).readAsBytesSync());
+        }
+
         final String packageName = request.url.pathSegments.length == 1
           ? flutterProject.manifest.appName
           : request.url.pathSegments.first;
