@@ -250,6 +250,7 @@ class RunCommand extends RunCommandBase {
       CustomDimensions.commandRunModeName: modeName,
       CustomDimensions.commandRunProjectModule: '${FlutterProject.current().isModule}',
       CustomDimensions.commandRunProjectHostLanguage: hostLanguage.join(','),
+      CustomDimensions.commandRunAndroidEmbeddingVersion: androidProject.getEmbeddingVersion().toString().split('.').last,
     };
   }
 
@@ -452,11 +453,12 @@ class RunCommand extends RunCommandBase {
       );
     } else if (webMode) {
       runner = webRunnerFactory.createWebRunner(
-        devices.single,
+        flutterDevices.single,
         target: targetFile,
         flutterProject: flutterProject,
         ipv6: ipv6,
         debuggingOptions: _createDebuggingOptions(),
+        stayResident: stayResident,
       );
     } else {
       runner = ColdRunner(

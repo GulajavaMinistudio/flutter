@@ -430,11 +430,12 @@ class AppDomain extends Domain {
 
     if (await device.targetPlatform == TargetPlatform.web_javascript) {
       runner = webRunnerFactory.createWebRunner(
-        device,
+        flutterDevice,
         flutterProject: flutterProject,
         target: target,
         debuggingOptions: options,
         ipv6: ipv6,
+        stayResident: true,
       );
     } else if (enableHotReload) {
       runner = HotRunner(

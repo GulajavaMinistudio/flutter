@@ -17,8 +17,9 @@ abstract class WebRunnerFactory {
 
   /// Create a [ResidentRunner] for the web.
   ResidentRunner createWebRunner(
-    Device device, {
+    FlutterDevice device, {
     String target,
+    @required bool stayResident,
     @required FlutterProject flutterProject,
     @required bool ipv6,
     @required DebuggingOptions debuggingOptions,
