@@ -111,13 +111,13 @@ class ListTileTheme extends InheritedTheme {
   /// ListTileTheme theme = ListTileTheme.of(context);
   /// ```
   static ListTileTheme of(BuildContext context) {
-    final ListTileTheme result = context.inheritFromWidgetOfExactType(ListTileTheme);
+    final ListTileTheme result = context.dependOnInheritedWidgetOfExactType<ListTileTheme>();
     return result ?? const ListTileTheme();
   }
 
   @override
   Widget wrap(BuildContext context, Widget child) {
-    final ListTileTheme ancestorTheme = context.ancestorWidgetOfExactType(ListTileTheme);
+    final ListTileTheme ancestorTheme = context.findAncestorWidgetOfExactType<ListTileTheme>();
     return identical(this, ancestorTheme) ? child : ListTileTheme(
       dense: dense,
       style: style,
@@ -440,7 +440,7 @@ enum ListTileControlAffinity {
 ///
 /// {@tool snippet --template=stateless_widget_scaffold}
 ///
-/// Here is an example of an article list item with multi-line titles and
+/// Here is an example of an article list item with multiline titles and
 /// subtitles. It utilizes [Row]s and [Column]s, as well as [Expanded] and
 /// [AspectRatio] widgets to organize its layout.
 ///
