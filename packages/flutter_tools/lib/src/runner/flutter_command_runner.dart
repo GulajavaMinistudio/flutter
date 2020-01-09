@@ -13,7 +13,6 @@ import '../artifacts.dart';
 import '../base/common.dart';
 import '../base/context.dart';
 import '../base/file_system.dart';
-import '../base/io.dart' as io;
 import '../base/logger.dart';
 import '../base/terminal.dart';
 import '../base/user_messages.dart';
@@ -146,13 +145,20 @@ class FlutterCommandRunner extends CommandRunner<void> {
 
   @override
   String get usageFooter {
-    return wrapText('Run "flutter help -v" for verbose help output, including less commonly used options.');
+    return wrapText('Run "flutter help -v" for verbose help output, including less commonly used options.',
+      columnWidth: outputPreferences.wrapColumn,
+      shouldWrap: outputPreferences.wrapText,
+    );
   }
 
   @override
   String get usage {
     final String usageWithoutDescription = super.usage.substring(description.length + 2);
-    return  '${wrapText(description)}\n\n$usageWithoutDescription';
+    final String prefix = wrapText(description,
+      shouldWrap: outputPreferences.wrapText,
+      columnWidth: outputPreferences.wrapColumn,
+    );
+    return '$prefix\n\n$usageWithoutDescription';
   }
 
   static String get defaultFlutterRoot {
@@ -206,7 +212,7 @@ class FlutterCommandRunner extends CommandRunner<void> {
       }
 
       Command<void> command = commands[error.commands.first];
-      for (String commandName in error.commands.skip(1)) {
+      for (final String commandName in error.commands.skip(1)) {
         command = command.subcommands[commandName];
       }
 
@@ -233,7 +239,7 @@ class FlutterCommandRunner extends CommandRunner<void> {
     // Check for verbose.
     if (topLevelResults['verbose'] as bool) {
       // Override the logger.
-      contextOverrides[Logger] = VerboseLogger(globals.logger);
+      contextOverrides[Logger] = VerboseLogger(globals.logger, stopwatch: Stopwatch());
     }
 
     // Don't set wrapColumns unless the user said to: if it's set, then all
@@ -255,7 +261,7 @@ class FlutterCommandRunner extends CommandRunner<void> {
     // anything, unless the user explicitly said to.
     final bool useWrapping = topLevelResults.wasParsed('wrap')
         ? topLevelResults['wrap'] as bool
-        : io.stdio.terminalColumns != null && topLevelResults['wrap'] as bool;
+        : globals.stdio.terminalColumns != null && topLevelResults['wrap'] as bool;
     contextOverrides[OutputPreferences] = OutputPreferences(
       wrapText: useWrapping,
       showColor: topLevelResults['color'] as bool,
@@ -386,7 +392,7 @@ class FlutterCommandRunner extends CommandRunner<void> {
     tmpBasename = tmpBasename.substring(tmpBasename.indexOf('_') + 1);
     // Strip suffix for various archs.
     final List<String> suffixes = <String>['_arm', '_arm64', '_x86', '_x64'];
-    for (String suffix in suffixes) {
+    for (final String suffix in suffixes) {
       tmpBasename = tmpBasename.replaceFirst(RegExp('$suffix\$'), '');
     }
     return 'host_' + tmpBasename;

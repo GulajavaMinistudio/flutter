@@ -204,7 +204,7 @@ class Daemon {
 
   void shutdown({ dynamic error }) {
     _commandSubscription?.cancel();
-    for (Domain domain in _domainMap.values) {
+    for (final Domain domain in _domainMap.values) {
       domain.dispose();
     }
     if (!_onExitCompleter.isCompleted) {
@@ -791,15 +791,15 @@ class DeviceDomain extends Domain {
   /// of properties (id, name, platform, ...).
   Future<List<Map<String, dynamic>>> getDevices([ Map<String, dynamic> args ]) async {
     return <Map<String, dynamic>>[
-      for (PollingDeviceDiscovery discoverer in _discoverers)
-        for (Device device in await discoverer.devices)
+      for (final PollingDeviceDiscovery discoverer in _discoverers)
+        for (final Device device in await discoverer.devices)
           await _deviceToMap(device),
     ];
   }
 
   /// Enable device events.
   Future<void> enable(Map<String, dynamic> args) {
-    for (PollingDeviceDiscovery discoverer in _discoverers) {
+    for (final PollingDeviceDiscovery discoverer in _discoverers) {
       discoverer.startPolling();
     }
     return Future<void>.value();
@@ -807,7 +807,7 @@ class DeviceDomain extends Domain {
 
   /// Disable device events.
   Future<void> disable(Map<String, dynamic> args) {
-    for (PollingDeviceDiscovery discoverer in _discoverers) {
+    for (final PollingDeviceDiscovery discoverer in _discoverers) {
       discoverer.stopPolling();
     }
     return Future<void>.value();
@@ -845,14 +845,14 @@ class DeviceDomain extends Domain {
 
   @override
   void dispose() {
-    for (PollingDeviceDiscovery discoverer in _discoverers) {
+    for (final PollingDeviceDiscovery discoverer in _discoverers) {
       discoverer.dispose();
     }
   }
 
   /// Return the device matching the deviceId field in the args.
   Future<Device> _getDevice(String deviceId) async {
-    for (PollingDeviceDiscovery discoverer in _discoverers) {
+    for (final PollingDeviceDiscovery discoverer in _discoverers) {
       final Device device = (await discoverer.devices).firstWhere((Device device) => device.id == deviceId, orElse: () => null);
       if (device != null) {
         return device;
@@ -974,7 +974,7 @@ class NotifyingLogger extends Logger {
   }) {
     assert(timeout != null);
     printStatus(message);
-    return SilentStatus(timeout: timeout);
+    return SilentStatus(timeout: timeout, timeoutConfiguration: timeoutConfiguration);
   }
 
   void dispose() {
@@ -983,6 +983,12 @@ class NotifyingLogger extends Logger {
 
   @override
   void sendEvent(String name, [Map<String, dynamic> args]) { }
+
+  @override
+  bool get supportsColor => throw UnimplementedError();
+
+  @override
+  bool get hasTerminal => false;
 }
 
 /// A running application, started by this daemon.
@@ -1167,6 +1173,7 @@ class _AppRunLogger extends Logger {
 
     _status = SilentStatus(
       timeout: timeout,
+      timeoutConfiguration: timeoutConfiguration,
       onFinish: () {
         _status = null;
         _sendProgressEvent(<String, dynamic>{
@@ -1206,6 +1213,12 @@ class _AppRunLogger extends Logger {
       domain.sendEvent(name, args);
     }
   }
+
+  @override
+  bool get supportsColor => throw UnimplementedError();
+
+  @override
+  bool get hasTerminal => false;
 }
 
 class LogMessage {

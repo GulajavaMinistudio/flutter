@@ -38,7 +38,10 @@ final Map<Type, Generator> _testbedDefaults = <Type, Generator>{
   // Keeps tests fast by avoiding the actual file system.
   FileSystem: () => MemoryFileSystem(style: globals.platform.isWindows ? FileSystemStyle.windows : FileSystemStyle.posix),
   ProcessManager: () => FakeProcessManager.any(),
-  Logger: () => BufferLogger(), // Allows reading logs and prevents stdout.
+  Logger: () => BufferLogger(
+    terminal: AnsiTerminal(stdio: globals.stdio, platform: globals.platform),  // Danger, using real stdio.
+    outputPreferences: OutputPreferences.test(),
+  ), // Allows reading logs and prevents stdout.
   OperatingSystemUtils: () => FakeOperatingSystemUtils(),
   OutputPreferences: () => OutputPreferences.test(), // configures BufferLogger to avoid color codes.
   Usage: () => NoOpUsage(), // prevent addition of analytics from burdening test mocks
@@ -139,7 +142,7 @@ class Testbed {
             }
             await test();
             Cache.flutterRoot = originalFlutterRoot;
-            for (MapEntry<Timer, StackTrace> entry in timers.entries) {
+            for (final MapEntry<Timer, StackTrace> entry in timers.entries) {
               if (entry.key.isActive) {
                 throw StateError('A Timer was active at the end of a test: ${entry.value}');
               }

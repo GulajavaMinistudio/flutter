@@ -15,7 +15,6 @@ import 'package:flutter_tools/src/base/context.dart';
 import 'package:flutter_tools/src/base/common.dart';
 import 'package:flutter_tools/src/base/file_system.dart';
 import 'package:flutter_tools/src/base/io.dart';
-import 'package:flutter_tools/src/base/logger.dart';
 import 'package:flutter_tools/src/base/terminal.dart';
 import 'package:flutter_tools/src/build_info.dart';
 import 'package:flutter_tools/src/cache.dart';
@@ -441,21 +440,19 @@ void main() {
         'See https://goo.gl/CP92wY for more information on the problem and how to fix it.',
         'This warning prints for all Android build failures. The real root cause of the error may be unrelated.',
       ];
-      for (String m in nonMatchingLines) {
+      for (final String m in nonMatchingLines) {
         expect(androidXPluginWarningRegex.hasMatch(m), isFalse);
       }
-      for (String m in matchingLines) {
+      for (final String m in matchingLines) {
         expect(androidXPluginWarningRegex.hasMatch(m), isTrue);
       }
     });
   });
 
   group('Config files', () {
-    BufferLogger mockLogger;
     Directory tempDir;
 
     setUp(() {
-      mockLogger = BufferLogger();
       tempDir = globals.fs.systemTempDirectory.createTempSync('flutter_settings_aar_test.');
     });
 
@@ -498,13 +495,12 @@ include ':app'
 
       createSettingsAarGradle(tempDir);
 
-      expect(mockLogger.statusText, contains('created successfully'));
+      expect(testLogger.statusText, contains('created successfully'));
       expect(tempDir.childFile('settings_aar.gradle').existsSync(), isTrue);
 
     }, overrides: <Type, Generator>{
       FileSystem: () => MemoryFileSystem(),
       ProcessManager: () => FakeProcessManager.any(),
-      Logger: () => mockLogger,
     });
 
     testUsingContext('create settings_aar.gradle when current settings.gradle doesn\'t load plugins', () {
@@ -532,13 +528,12 @@ include ':app'
 
       createSettingsAarGradle(tempDir);
 
-      expect(mockLogger.statusText, contains('created successfully'));
+      expect(testLogger.statusText, contains('created successfully'));
       expect(tempDir.childFile('settings_aar.gradle').existsSync(), isTrue);
 
     }, overrides: <Type, Generator>{
       FileSystem: () => MemoryFileSystem(),
       ProcessManager: () => FakeProcessManager.any(),
-      Logger: () => mockLogger,
     });
   });
 
