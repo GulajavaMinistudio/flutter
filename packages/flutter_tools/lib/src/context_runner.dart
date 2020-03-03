@@ -40,7 +40,6 @@ import 'ios/ios_workflow.dart';
 import 'ios/mac.dart';
 import 'ios/simulators.dart';
 import 'ios/xcodeproj.dart';
-import 'linux/linux_workflow.dart';
 import 'macos/cocoapods.dart';
 import 'macos/cocoapods_validator.dart';
 import 'macos/macos_workflow.dart';
@@ -141,7 +140,6 @@ Future<T> runInContext<T>(
       IOSSimulatorUtils: () => IOSSimulatorUtils(),
       IOSWorkflow: () => const IOSWorkflow(),
       KernelCompilerFactory: () => const KernelCompilerFactory(),
-      LinuxWorkflow: () => const LinuxWorkflow(),
       Logger: () => globals.platform.isWindows
         ? WindowsStdoutLogger(
             terminal: globals.terminal,
@@ -177,7 +175,7 @@ Future<T> runInContext<T>(
       ShutdownHooks: () => ShutdownHooks(logger: globals.logger),
       Signals: () => Signals(),
       SimControl: () => SimControl(),
-      Stdio: () => const Stdio(),
+      Stdio: () => Stdio(),
       SystemClock: () => const SystemClock(),
       TimeoutConfiguration: () => const TimeoutConfiguration(),
       Usage: () => Usage(
