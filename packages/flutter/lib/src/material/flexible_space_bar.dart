@@ -237,6 +237,8 @@ class _FlexibleSpaceBarState extends State<FlexibleSpaceBar> {
     switch (theme.platform) {
       case TargetPlatform.android:
       case TargetPlatform.fuchsia:
+      case TargetPlatform.linux:
+      case TargetPlatform.windows:
         return false;
       case TargetPlatform.iOS:
       case TargetPlatform.macOS:
@@ -345,8 +347,10 @@ class _FlexibleSpaceBarState extends State<FlexibleSpaceBar> {
             case TargetPlatform.macOS:
               title = widget.title;
               break;
-            case TargetPlatform.fuchsia:
             case TargetPlatform.android:
+            case TargetPlatform.fuchsia:
+            case TargetPlatform.linux:
+            case TargetPlatform.windows:
               title = Semantics(
                 namesRoute: true,
                 child: widget.title,
@@ -390,7 +394,15 @@ class _FlexibleSpaceBarState extends State<FlexibleSpaceBar> {
                   alignment: titleAlignment,
                   child: DefaultTextStyle(
                     style: titleStyle,
-                    child: title,
+                    child: LayoutBuilder(
+                      builder: (BuildContext context, BoxConstraints constraints) {
+                        return Container(
+                          width: constraints.maxWidth / scaleValue,
+                          alignment: titleAlignment,
+                          child: title,
+                        );
+                      }
+                    ),
                   ),
                 ),
               ),
