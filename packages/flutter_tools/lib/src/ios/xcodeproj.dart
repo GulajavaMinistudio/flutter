@@ -239,6 +239,10 @@ List<String> _xcodeBuildSettingsLines({
     xcodeBuildSettings.add('DART_DEFINES=${jsonEncode(buildInfo.dartDefines)}');
   }
 
+  if (buildInfo.extraFrontEndOptions?.isNotEmpty ?? false) {
+    xcodeBuildSettings.add('EXTRA_FRONT_END_OPTIONS=${buildInfo.extraFrontEndOptions.join(',')}');
+  }
+
   return xcodeBuildSettings;
 }
 
@@ -249,7 +253,7 @@ class XcodeProjectInterpreter {
     @required ProcessManager processManager,
     @required Logger logger,
     @required FileSystem fileSystem,
-    @required AnsiTerminal terminal,
+    @required Terminal terminal,
   }) : _platform = platform,
        _fileSystem = fileSystem,
        _terminal = terminal,
@@ -259,7 +263,7 @@ class XcodeProjectInterpreter {
   final Platform _platform;
   final FileSystem _fileSystem;
   final ProcessUtils _processUtils;
-  final AnsiTerminal _terminal;
+  final Terminal _terminal;
   final Logger _logger;
 
   static const String _executable = '/usr/bin/xcodebuild';
@@ -364,14 +368,15 @@ class XcodeProjectInterpreter {
     }
   }
 
-  Future<void> cleanWorkspace(String workspacePath, String scheme) async {
+  Future<void> cleanWorkspace(String workspacePath, String scheme, { bool verbose = false }) async {
     await _processUtils.run(<String>[
       _executable,
       '-workspace',
       workspacePath,
       '-scheme',
       scheme,
-      '-quiet',
+      if (!verbose)
+        '-quiet',
       'clean',
       ...environmentVariablesAsXcodeBuildSettings(_platform)
     ], workingDirectory: _fileSystem.currentDirectory.path);
