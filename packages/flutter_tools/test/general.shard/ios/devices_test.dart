@@ -36,8 +36,7 @@ void main() {
 
   group('IOSDevice', () {
     final List<Platform> unsupportedPlatforms = <Platform>[linuxPlatform, windowsPlatform];
-    Artifacts mockArtifacts;
-    MockCache mockCache;
+    Cache cache;
     MockVmService mockVmService;
     Logger logger;
     IOSDeploy iosDeploy;
@@ -45,22 +44,20 @@ void main() {
     FileSystem nullFileSystem;
 
     setUp(() {
-      mockArtifacts = MockArtifacts();
-      mockCache = MockCache();
+      final Artifacts artifacts = Artifacts.test();
+      cache = Cache.test();
       mockVmService = MockVmService();
-      const MapEntry<String, String> dyLdLibEntry = MapEntry<String, String>('DYLD_LIBRARY_PATH', '/path/to/libs');
-      when(mockCache.dyLdLibEntry).thenReturn(dyLdLibEntry);
       logger = BufferLogger.test();
       iosDeploy = IOSDeploy(
-        artifacts: mockArtifacts,
-        cache: mockCache,
+        artifacts: artifacts,
+        cache: cache,
         logger: logger,
         platform: macPlatform,
         processManager: FakeProcessManager.any(),
       );
       iMobileDevice = IMobileDevice(
-        artifacts: mockArtifacts,
-        cache: mockCache,
+        artifacts: artifacts,
+        cache: cache,
         logger: logger,
         processManager: FakeProcessManager.any(),
       );
@@ -213,8 +210,7 @@ void main() {
       MockProcess mockProcess3;
       IOSDevicePortForwarder portForwarder;
       ForwardedPort forwardedPort;
-      Artifacts mockArtifacts;
-      MockCache mockCache;
+      Cache cache;
       Logger logger;
       IOSDeploy iosDeploy;
       FileSystem nullFileSystem;
@@ -261,11 +257,10 @@ void main() {
         mockProcess2 = MockProcess();
         mockProcess3 = MockProcess();
         forwardedPort = ForwardedPort.withContext(123, 456, mockProcess3);
-        mockArtifacts = MockArtifacts();
-        mockCache = MockCache();
+        cache = Cache.test();
         iosDeploy = IOSDeploy(
-          artifacts: mockArtifacts,
-          cache: mockCache,
+          artifacts: Artifacts.test(),
+          cache: cache,
           logger: logger,
           platform: macPlatform,
           processManager: FakeProcessManager.any(),
@@ -305,8 +300,7 @@ void main() {
 
   group('polling', () {
     MockXcdevice mockXcdevice;
-    MockArtifacts mockArtifacts;
-    MockCache mockCache;
+    Cache cache;
     MockVmService mockVmService1;
     MockVmService mockVmService2;
     FakeProcessManager fakeProcessManager;
@@ -319,23 +313,23 @@ void main() {
 
     setUp(() {
       mockXcdevice = MockXcdevice();
-      mockArtifacts = MockArtifacts();
-      mockCache = MockCache();
+      final Artifacts artifacts = Artifacts.test();
+      cache = Cache.test();
       mockVmService1 = MockVmService();
       mockVmService2 = MockVmService();
       logger = BufferLogger.test();
       mockIosWorkflow = MockIOSWorkflow();
       fakeProcessManager = FakeProcessManager.any();
       iosDeploy = IOSDeploy(
-        artifacts: mockArtifacts,
-        cache: mockCache,
+        artifacts: artifacts,
+        cache: cache,
         logger: logger,
         platform: macPlatform,
         processManager: fakeProcessManager,
       );
       iMobileDevice = IMobileDevice(
-        artifacts: mockArtifacts,
-        cache: mockCache,
+        artifacts: artifacts,
+        cache: cache,
         processManager: fakeProcessManager,
         logger: logger,
       );
@@ -604,8 +598,6 @@ void main() {
 }
 
 class MockIOSApp extends Mock implements IOSApp {}
-class MockArtifacts extends Mock implements Artifacts {}
-class MockCache extends Mock implements Cache {}
 class MockIMobileDevice extends Mock implements IMobileDevice {}
 class MockIOSDeploy extends Mock implements IOSDeploy {}
 class MockIOSWorkflow extends Mock implements IOSWorkflow {}
