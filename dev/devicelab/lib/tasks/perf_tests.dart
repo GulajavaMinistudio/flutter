@@ -218,13 +218,6 @@ TaskFunction createComplexLayoutStartupTest() {
   ).run;
 }
 
-TaskFunction createHelloWorldStartupTest() {
-  return StartupTest(
-    '${flutterDirectory.path}/examples/hello_world',
-    reportMetrics: false,
-  ).run;
-}
-
 TaskFunction createFlutterGalleryCompileTest() {
   return CompileTest('${flutterDirectory.path}/dev/integration_tests/flutter_gallery').run;
 }
@@ -1383,7 +1376,7 @@ class ReportedDurationTest {
 class ListStatistics {
   factory ListStatistics(Iterable<int> data) {
     assert(data.isNotEmpty);
-    assert(data.length % 2 == 1);
+    assert(data.length.isOdd);
     final List<int> sortedData = data.toList()..sort();
     return ListStatistics._(
       sortedData.first,
