@@ -463,11 +463,10 @@ abstract class FlutterCommand extends Command<void> {
     argParser.addOption('web-renderer',
       defaultsTo: 'html',
       allowed: <String>['auto', 'canvaskit', 'html'],
-      help: 'Which rendering backend to use for Flutter for Web.'
-          'auto      - Use the HTML renderer on mobile devices,'
-          '            and CanvasKit on desktop devices.'
-          'canvaskit - Always use the CanvasKit renderer.'
-          'html      - Default. Always use the HTML renderer.',
+      help: 'The renderer implementation to use when building for the web. Possible values are:\n'
+            'html - always use the HTML renderer. This renderer uses a combination of HTML, CSS, SVG, 2D Canvas, and WebGL. This is the default.\n'
+            'canvaskit - always use the CanvasKit renderer. This renderer uses WebGL and WebAssembly to render graphics.\n'
+            'auto - use the HTML renderer on mobile devices, and CanvasKit on desktop devices.',
     );
   }
 
@@ -588,14 +587,10 @@ abstract class FlutterCommand extends Command<void> {
   void addShrinkingFlag() {
     argParser.addFlag('shrink',
       negatable: true,
-      defaultsTo: true,
-      help: 'Whether to enable code shrinking on release mode. '
-            'When enabling shrinking, you also benefit from obfuscation, '
-            'which shortens the names of your app’s classes and members, '
-            'and optimization, which applies more aggressive strategies to '
-            'further reduce the size of your app. '
-            'To learn more, see: https://developer.android.com/studio/build/shrink-code',
-      );
+      hide: true,
+      help: 'This flag is deprecated. Code shrinking is always enabled in release builds. '
+            'To learn more, see: https://developer.android.com/studio/build/shrink-code'
+    );
   }
 
   void addNullSafetyModeOptions({ @required bool hide }) {
