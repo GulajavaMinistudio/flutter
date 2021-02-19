@@ -6,7 +6,6 @@
 
 import 'package:file/file.dart';
 import 'package:file/memory.dart';
-import 'package:flutter_tools/src/base/context.dart';
 import 'package:flutter_tools/src/base/file_system.dart';
 import 'package:flutter_tools/src/base/logger.dart';
 import 'package:flutter_tools/src/build_info.dart';
@@ -111,6 +110,17 @@ void main() {
         );
       });
 
+      _testInMemory('reads dependencies from pubspec.yaml', () async {
+        final Directory directory = globals.fs.directory('myproject');
+        directory.childFile('pubspec.yaml')
+          ..createSync(recursive: true)
+          ..writeAsStringSync(validPubspecWithDependencies);
+        expect(
+          FlutterProject.fromDirectory(directory).manifest.dependencies,
+          <String>{'plugin_a', 'plugin_b'},
+        );
+      });
+
       _testInMemory('sets up location', () async {
         final Directory directory = globals.fs.directory('myproject');
         expect(
@@ -118,7 +128,7 @@ void main() {
           directory.absolute.path,
         );
         expect(
-          FlutterProject.fromPath(directory.path).directory.absolute.path,
+          FlutterProject.fromDirectoryTest(directory).directory.absolute.path,
           directory.absolute.path,
         );
         expect(
@@ -905,6 +915,16 @@ String get validPubspec => '''
 name: hello
 flutter:
 ''';
+
+String get validPubspecWithDependencies => '''
+name: hello
+flutter:
+
+dependencies:
+  plugin_a:
+  plugin_b:
+''';
+
 
 String get invalidPubspec => '''
 name: hello
