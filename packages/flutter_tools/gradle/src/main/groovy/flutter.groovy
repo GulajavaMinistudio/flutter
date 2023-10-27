@@ -308,7 +308,7 @@ class FlutterPlugin implements Plugin<Project> {
                     shrinkResources isBuiltAsApp(project)
                     // Fallback to `android/app/proguard-rules.pro`.
                     // This way, custom Proguard rules can be configured as needed.
-                    proguardFiles project.android.getDefaultProguardFile("proguard-android.txt"), flutterProguardRules, "proguard-rules.pro"
+                    proguardFiles project.android.getDefaultProguardFile("proguard-android-optimize.txt"), flutterProguardRules, "proguard-rules.pro"
                 }
             }
         }
@@ -1130,12 +1130,19 @@ class FlutterPlugin implements Plugin<Project> {
                     variantOutput.processResourcesProvider.get() : variantOutput.processResources
                 processResources.dependsOn(copyFlutterAssetsTask)
             }
-            // Task compressAssets uses the output of copyFlutterAssetsTask,
-            // so it's necessary to declare it as an dependency.
+            // The following tasks use the output of copyFlutterAssetsTask,
+            // so it's necessary to declare it as an dependency since Gradle 8.
+            // See https://docs.gradle.org/8.1/userguide/validation_problems.html#implicit_dependency.
             def compressAssetsTask = project.tasks.findByName("compress${variant.name.capitalize()}Assets")
             if (compressAssetsTask) {
                 compressAssetsTask.dependsOn copyFlutterAssetsTask
             }
+
+            def bundleAarTask = project.tasks.findByName("bundle${variant.name.capitalize()}Aar")
+            if (bundleAarTask) {
+                bundleAarTask.dependsOn copyFlutterAssetsTask
+            }
+
             return copyFlutterAssetsTask
         } // end def addFlutterDeps
 
