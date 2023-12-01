@@ -264,6 +264,9 @@ Future<void> main(List<String> args) async {
       'skp_generator': _runSkpGeneratorTests,
       'realm_checker': _runRealmCheckerTest,
       'customer_testing': _runCustomerTesting,
+      'analyze': _runAnalyze,
+      'fuchsia_precache': _runFuchsiaPrecache,
+      'docs': _runDocs,
       kTestHarnessShardName: _runTestHarnessTests, // Used for testing this script; also run as part of SHARD=framework_tests, SUBSHARD=misc.
     });
   } catch (error, stackTrace) {
@@ -1585,6 +1588,60 @@ Future<void> _runCustomerTesting() async {
     Platform.isWindows? winScript: './ci.sh',
     <String>[],
     workingDirectory: path.join(flutterRoot, 'dev', 'customer_testing'),
+  );
+}
+
+// Runs analysis tests.
+Future<void> _runAnalyze() async {
+  printProgress('${green}Running analysis testing$reset');
+  await runCommand(
+    'dart',
+    <String>[
+      '--enable-asserts',
+      path.join(flutterRoot, 'dev', 'bots', 'analyze.dart'),
+    ],
+    workingDirectory: flutterRoot,
+  );
+}
+
+// Runs flutter_precache.
+Future<void> _runFuchsiaPrecache() async {
+  printProgress('${green}Running flutter precache tests$reset');
+  await runCommand(
+    'flutter',
+    <String>[
+      'config',
+      '--enable-fuchsia',
+    ],
+    workingDirectory: flutterRoot,
+  );
+  await runCommand(
+    'flutter',
+    <String>[
+      'precache',
+      '--flutter_runner',
+      '--fuchsia',
+      '--no-android',
+      '--no-ios',
+      '--force',
+    ],
+    workingDirectory: flutterRoot,
+  );
+}
+
+// Runs docs.
+Future<void> _runDocs() async {
+  printProgress('${green}Running flutter doc tests$reset');
+  await runCommand(
+    './dev/bots/docs.sh',
+    <String>[
+      '--output',
+      'dev/docs/api_docs.zip',
+      '--keep-staging',
+      '--staging-dir',
+      'dev/docs',
+    ],
+    workingDirectory: flutterRoot,
   );
 }
 
