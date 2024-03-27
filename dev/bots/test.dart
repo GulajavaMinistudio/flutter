@@ -66,6 +66,7 @@ import 'package:process/process.dart';
 import 'browser.dart';
 import 'run_command.dart';
 import 'service_worker_test.dart';
+import 'suite_runners/run_add_to_app_life_cycle_tests.dart';
 import 'tool_subsharding.dart';
 import 'utils.dart';
 
@@ -187,6 +188,8 @@ String get shuffleSeed {
   return _shuffleSeed!;
 }
 
+final bool _isRandomizationOff = bool.tryParse(Platform.environment['TEST_RANDOMIZATION_OFF'] ?? '') ?? false;
+
 /// When you call this, you can pass additional arguments to pass custom
 /// arguments to flutter test. For example, you might want to call this
 /// script with the parameter --local-engine=host_debug_unopt to
@@ -228,7 +231,7 @@ Future<void> main(List<String> args) async {
       printProgress('Running task: ${Platform.environment[CIRRUS_TASK_NAME]}');
     }
     await selectShard(<String, ShardRunner>{
-      'add_to_app_life_cycle_tests': _runAddToAppLifeCycleTests,
+      'add_to_app_life_cycle_tests': () => addToAppLifeCycleRunner(flutterRoot),
       'build_tests': _runBuildTests,
       'framework_coverage': _runFrameworkCoverage,
       'framework_tests': _runFrameworkTests,
@@ -595,6 +598,12 @@ Future<void> _runBuildTests() async {
             path.join('dev', 'integration_tests', 'web_compile_tests'),
             path.join('lib', 'dart_io_import.dart'),
           ),
+      // Should be able to compile with a call to:
+      // BackgroundIsolateBinaryMessenger.ensureInitialized.
+      () => _flutterBuildDart2js(
+            path.join('dev', 'integration_tests', 'web_compile_tests'),
+            path.join('lib', 'background_isolate_binary_messenger.dart'),
+          ),
     ],
     runForbiddenFromReleaseTests,
   ]..shuffle(math.Random(0));
@@ -786,19 +795,6 @@ Future<void> _flutterBuildDart2js(String relativePathToApplication, String targe
       'FLUTTER_WEB': 'true',
     },
   );
-}
-
-Future<void> _runAddToAppLifeCycleTests() async {
-  if (Platform.isMacOS) {
-    printProgress('${green}Running add-to-app life cycle iOS integration tests$reset...');
-    final String addToAppDir = path.join(flutterRoot, 'dev', 'integration_tests', 'ios_add2app_life_cycle');
-    await runCommand('./build_and_test.sh',
-      <String>[],
-      workingDirectory: addToAppDir,
-    );
-  } else {
-    printProgress('${yellow}Skipped on this platform (only iOS has add-to-add lifecycle tests at this time).$reset');
-  }
 }
 
 Future<void> _runFrameworkTests() async {
@@ -1265,9 +1261,11 @@ Future<void> _runWebLongRunningTests() async {
     () => _runWebE2eTest('scroll_wheel_integration', buildMode: 'debug', renderer: 'html'),
 
     // This test doesn't do anything interesting w.r.t. rendering, so we don't run the full build mode x renderer matrix.
-    () => _runWebE2eTest('text_editing_integration', buildMode: 'debug', renderer: 'canvaskit'),
-    () => _runWebE2eTest('text_editing_integration', buildMode: 'profile', renderer: 'html'),
-    () => _runWebE2eTest('text_editing_integration', buildMode: 'release', renderer: 'html'),
+    // These tests have been extremely flaky, so we are temporarily disabling them until we figure out how to make them more robust.
+    // See https://github.com/flutter/flutter/issues/143834
+    // () => _runWebE2eTest('text_editing_integration', buildMode: 'debug', renderer: 'canvaskit'),
+    // () => _runWebE2eTest('text_editing_integration', buildMode: 'profile', renderer: 'html'),
+    // () => _runWebE2eTest('text_editing_integration', buildMode: 'release', renderer: 'html'),
 
     // This test doesn't do anything interesting w.r.t. rendering, so we don't run the full build mode x renderer matrix.
     () => _runWebE2eTest('url_strategy_integration', buildMode: 'debug', renderer: 'html'),
@@ -2469,7 +2467,7 @@ Future<void> _runFlutterTest(String workingDirectory, {
 
   final List<String> args = <String>[
     'test',
-    if (shuffleTests) '--test-randomize-ordering-seed=$shuffleSeed',
+    if (shuffleTests && !_isRandomizationOff) '--test-randomize-ordering-seed=$shuffleSeed',
     if (fatalWarnings) '--fatal-warnings',
     ...options,
     ...tags,
