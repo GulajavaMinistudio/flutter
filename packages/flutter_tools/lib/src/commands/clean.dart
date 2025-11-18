@@ -6,6 +6,7 @@ import 'package:meta/meta.dart';
 
 import '../../src/macos/xcode.dart';
 import '../base/common.dart';
+import '../base/error_handling_io.dart';
 import '../base/file_system.dart';
 import '../base/logger.dart';
 import '../build_info.dart';
@@ -26,10 +27,10 @@ class CleanCommand extends FlutterCommand {
   final bool _verbose;
 
   @override
-  final String name = 'clean';
+  final name = 'clean';
 
   @override
-  final String description = 'Delete the build/ and .dart_tool/ directories.';
+  final description = 'Delete the build/ and .dart_tool/ directories.';
 
   @override
   String get category => FlutterCommandCategory.project;
@@ -51,8 +52,7 @@ class CleanCommand extends FlutterCommand {
     final Directory buildDir = globals.fs.directory(getBuildDirectory());
     deleteFile(buildDir);
 
-    deleteFile(flutterProject.dartTool);
-    deleteFile(flutterProject.directory.childFile('.packages'));
+    _cleanDartTool(flutterProject);
 
     deleteFile(flutterProject.android.ephemeralDirectory);
 
@@ -68,7 +68,6 @@ class CleanCommand extends FlutterCommand {
     deleteFile(flutterProject.macos.ephemeralDirectory);
     deleteFile(flutterProject.windows.ephemeralDirectory);
     deleteFile(flutterProject.flutterPluginsDependenciesFile);
-    deleteFile(flutterProject.flutterPluginsFile);
 
     return const FlutterCommandResult(ExitStatus.success);
   }
@@ -81,10 +80,11 @@ class CleanCommand extends FlutterCommand {
     final Status xcodeStatus = globals.logger.startProgress('Cleaning Xcode workspace...');
     try {
       final XcodeProjectInterpreter xcodeProjectInterpreter = globals.xcodeProjectInterpreter!;
-      final XcodeProjectInfo projectInfo =
-          (await xcodeProjectInterpreter.getInfo(xcodeWorkspace.parent.path))!;
+      final XcodeProjectInfo projectInfo = (await xcodeProjectInterpreter.getInfo(
+        xcodeWorkspace.parent.path,
+      ))!;
       if (argResults?.wasParsed('scheme') ?? false) {
-        final String scheme = argResults!['scheme'] as String;
+        final scheme = argResults!['scheme'] as String;
         if (scheme.isEmpty) {
           throwToolExit('No scheme was specified for --scheme');
         }
@@ -106,7 +106,7 @@ class CleanCommand extends FlutterCommand {
         }
       }
     } on Exception catch (error) {
-      final String message = 'Could not clean Xcode workspace: $error';
+      final message = 'Could not clean Xcode workspace: $error';
       if (argResults?.wasParsed('scheme') ?? false) {
         throwToolExit(message);
       } else {
@@ -117,8 +117,39 @@ class CleanCommand extends FlutterCommand {
     }
   }
 
+  void _cleanDartTool(FlutterProject flutterProject) {
+    if (!flutterProject.widgetPreviewScaffold.existsSync()) {
+      deleteFile(flutterProject.dartTool);
+      return;
+    }
+    // If widget_preview_scaffold exists, it's possible that the widget previewer is actively
+    // running. Deleting the entire .dart_tool directory could result in the widget previewer
+    // crashing, so we instead delete everything under .dart_tool except for the
+    // widget_preview_scaffold.
+    //
+    // See https://github.com/flutter/flutter/issues/175534 for details.
+    // TODO(bkonyi): consider alternatives where we gracefully shutdown the previewer when the
+    // .dart_tool/widget_preview_scaffold directory is deleted to avoid special casing the clean
+    // operation.
+    for (final FileSystemEntity entity in flutterProject.dartTool.listSync()) {
+      if (entity.basename != flutterProject.widgetPreviewScaffold.basename) {
+        deleteFile(entity);
+      }
+    }
+  }
+
   @visibleForTesting
   void deleteFile(FileSystemEntity file) {
+    try {
+      ErrorHandlingFileSystem.noExitOnFailure(() {
+        _deleteFile(file);
+      });
+    } on Exception catch (e) {
+      globals.printError('Failed to remove ${file.path}: $e');
+    }
+  }
+
+  void _deleteFile(FileSystemEntity file) {
     // This will throw a FileSystemException if the directory is missing permissions.
     try {
       if (!file.existsSync()) {

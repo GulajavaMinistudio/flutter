@@ -171,12 +171,12 @@ void main() {
 
   for (final _PlatformAnnounceScenario test in <_PlatformAnnounceScenario>[
     _PlatformAnnounceScenario(
-      announce: false,
+      supportsAnnounce: false,
       testName:
           'Should announce only the first error message when validate returns errors and announce = false',
     ),
     _PlatformAnnounceScenario(
-      announce: true,
+      supportsAnnounce: true,
       testName:
           'Should not announce error message when validate returns errors and announce = true',
     ),
@@ -186,7 +186,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: MediaQuery(
-            data: MediaQueryData(announce: test.announce),
+            data: MediaQueryData(supportsAnnounce: test.supportsAnnounce),
             child: Directionality(
               textDirection: TextDirection.ltr,
               child: Center(
@@ -218,14 +218,15 @@ void main() {
       expect(find.text('First error message'), findsOneWidget);
       expect(find.text('Second error message'), findsOneWidget);
 
-      if (test.announce) {
+      if (test.supportsAnnounce) {
         final CapturedAccessibilityAnnouncement announcement = tester.takeAnnouncements().single;
         expect(announcement.message, 'First error message');
         expect(announcement.textDirection, TextDirection.ltr);
         expect(announcement.assertiveness, Assertiveness.assertive);
       } else {
-        final CapturedAccessibilityAnnouncement? announcement =
-            tester.takeAnnouncements().firstOrNull;
+        final CapturedAccessibilityAnnouncement? announcement = tester
+            .takeAnnouncements()
+            .firstOrNull;
         expect(announcement, null);
       }
     });
@@ -377,8 +378,8 @@ void main() {
 
     await tester.pumpWidget(builder());
 
-    final Set<FormFieldState<dynamic>> validationResult =
-        formKey.currentState!.validateGranularly();
+    final Set<FormFieldState<dynamic>> validationResult = formKey.currentState!
+        .validateGranularly();
 
     expect(validationResult.length, equals(2));
     expect(
@@ -405,7 +406,7 @@ void main() {
     Widget builder() {
       return MaterialApp(
         home: MediaQuery(
-          data: const MediaQueryData(announce: true),
+          data: const MediaQueryData(supportsAnnounce: true),
           child: Directionality(
             textDirection: TextDirection.ltr,
             child: Center(
@@ -508,7 +509,9 @@ void main() {
             textDirection: TextDirection.ltr,
             child: Center(
               child: Material(
-                child: Form(child: TextFormField(key: inputKey, initialValue: 'hello')),
+                child: Form(
+                  child: TextFormField(key: inputKey, initialValue: 'hello'),
+                ),
               ),
             ),
           ),
@@ -549,7 +552,9 @@ void main() {
             textDirection: TextDirection.ltr,
             child: Center(
               child: Material(
-                child: Form(child: TextFormField(key: inputKey, controller: controller)),
+                child: Form(
+                  child: TextFormField(key: inputKey, controller: controller),
+                ),
               ),
             ),
           ),
@@ -649,7 +654,9 @@ void main() {
                 textDirection: TextDirection.ltr,
                 child: Center(
                   child: Material(
-                    child: Form(child: TextFormField(key: inputKey, controller: currentController)),
+                    child: Form(
+                      child: TextFormField(key: inputKey, controller: currentController),
+                    ),
                   ),
                 ),
               ),
@@ -748,18 +755,17 @@ void main() {
               child: Material(
                 child: Form(
                   key: formKey,
-                  child:
-                      remove
-                          ? Container()
-                          : TextFormField(
-                            autofocus: true,
-                            onSaved: (String? value) {
-                              fieldValue = value;
-                            },
-                            validator: (String? value) {
-                              return (value == null || value.isEmpty) ? null : 'yes';
-                            },
-                          ),
+                  child: remove
+                      ? Container()
+                      : TextFormField(
+                          autofocus: true,
+                          onSaved: (String? value) {
+                            fieldValue = value;
+                          },
+                          validator: (String? value) {
+                            return (value == null || value.isEmpty) ? null : 'yes';
+                          },
+                        ),
                 ),
               ),
             ),
@@ -965,7 +971,9 @@ void main() {
                 child: Form(
                   key: formState,
                   autovalidateMode: AutovalidateMode.onUserInteraction,
-                  child: Material(child: TextFormField(initialValue: 'foo', validator: errorText)),
+                  child: Material(
+                    child: TextFormField(initialValue: 'foo', validator: errorText),
+                  ),
                 ),
               ),
             ),
@@ -1012,8 +1020,8 @@ void main() {
                   onSaved: (String? value) {
                     fieldValue = value;
                   },
-                  validator:
-                      (String? value) => (value != null && value.length > 5) ? 'Exceeded' : null,
+                  validator: (String? value) =>
+                      (value != null && value.length > 5) ? 'Exceeded' : null,
                 ),
               ),
             ),
@@ -1047,7 +1055,9 @@ void main() {
         data: const MediaQueryData(),
         child: Directionality(
           textDirection: TextDirection.ltr,
-          child: Center(child: Material(child: TextFormField(key: fieldKey))),
+          child: Center(
+            child: Material(child: TextFormField(key: fieldKey)),
+          ),
         ),
       ),
     );
@@ -1067,7 +1077,9 @@ void main() {
         data: const MediaQueryData(),
         child: Directionality(
           textDirection: TextDirection.ltr,
-          child: Center(child: Material(child: TextFormField(key: fieldKey))),
+          child: Center(
+            child: Material(child: TextFormField(key: fieldKey)),
+          ),
         ),
       ),
     );
@@ -1092,7 +1104,9 @@ void main() {
         data: const MediaQueryData(),
         child: Directionality(
           textDirection: TextDirection.ltr,
-          child: Center(child: Material(child: TextFormField(key: fieldKey))),
+          child: Center(
+            child: Material(child: TextFormField(key: fieldKey)),
+          ),
         ),
       ),
     );
@@ -1620,7 +1634,11 @@ void main() {
     await pumpWidget();
     expect(
       tester.getSemantics(find.byType(TextFormField).last),
-      containsSemantics(isTextField: true, validationResult: SemanticsValidationResult.valid),
+      containsSemantics(
+        isTextField: true,
+        isFocusable: true,
+        validationResult: SemanticsValidationResult.valid,
+      ),
     );
 
     // Test invalid case
@@ -1628,13 +1646,17 @@ void main() {
     await pumpWidget();
     expect(
       tester.getSemantics(find.byType(TextFormField).last),
-      containsSemantics(isTextField: true, validationResult: SemanticsValidationResult.invalid),
+      containsSemantics(
+        isTextField: true,
+        isFocusable: true,
+        validationResult: SemanticsValidationResult.invalid,
+      ),
     );
   });
 }
 
 class _PlatformAnnounceScenario {
-  _PlatformAnnounceScenario({required this.announce, required this.testName});
-  final bool announce;
+  _PlatformAnnounceScenario({required this.supportsAnnounce, required this.testName});
+  final bool supportsAnnounce;
   final String testName;
 }

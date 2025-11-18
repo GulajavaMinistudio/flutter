@@ -41,7 +41,7 @@ static sk_sp<SkImage> ResizeRasterImage(const sk_sp<SkImage>& image,
   }
 
   if (image->dimensions() == resized_dimensions) {
-    return image->makeRasterImage();
+    return image->makeRasterImage(nullptr);
   }
 
   const auto scaled_image_info =
@@ -92,7 +92,7 @@ static sk_sp<SkImage> ImageFromDecompressedData(
 
   if (!target_width && !target_height) {
     // No resizing requested. Just rasterize the image.
-    return image->makeRasterImage();
+    return image->makeRasterImage(nullptr);
   }
 
   return ResizeRasterImage(image, SkISize::Make(target_width, target_height),
@@ -110,7 +110,7 @@ sk_sp<SkImage> ImageDecoderSkia::ImageFromCompressedData(
   if (!descriptor->should_resize(target_width, target_height)) {
     // No resizing requested. Just decode & rasterize the image.
     sk_sp<SkImage> image = descriptor->image();
-    return image ? image->makeRasterImage() : nullptr;
+    return image ? image->makeRasterImage(nullptr) : nullptr;
   }
 
   const SkISize source_dimensions = descriptor->image_info().dimensions();
@@ -220,8 +220,7 @@ static SkiaGPUObject<SkImage> UploadRasterImage(
 
 // |ImageDecoder|
 void ImageDecoderSkia::Decode(fml::RefPtr<ImageDescriptor> descriptor_ref_ptr,
-                              uint32_t target_width,
-                              uint32_t target_height,
+                              const ImageDecoder::Options& options,
                               const ImageResult& callback) {
   TRACE_EVENT0("flutter", __FUNCTION__);
   fml::tracing::TraceFlow flow(__FUNCTION__);
@@ -271,8 +270,8 @@ void ImageDecoderSkia::Decode(fml::RefPtr<ImageDescriptor> descriptor_ref_ptr,
                          io_manager = io_manager_,                //
                          io_runner = runners_.GetIOTaskRunner(),  //
                          result,                                  //
-                         target_width = target_width,             //
-                         target_height = target_height,           //
+                         target_width = options.target_width,     //
+                         target_height = options.target_height,   //
                          flow = std::move(flow)                   //
   ]() mutable {
         // Step 1: Decompress the image.
